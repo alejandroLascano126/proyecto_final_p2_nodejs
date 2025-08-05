@@ -7,7 +7,7 @@ module.exports = {
 
     await queryInterface.addConstraint('proyectos', {
         fields: ['usuarioId'],
-        name: 'usuarioId_fk',
+        name: 'usuarioId_pfk',
         type: 'foreign key',
         references: {
         table: 'usuarios',
@@ -21,7 +21,7 @@ module.exports = {
 
       await queryInterface.addConstraint('tareas', {
         fields: ['idProyecto'],
-        name: 'idProyecto_fk',
+        name: 'idProyecto_tfk',
         type: 'foreign key',
         references: {
         table: 'proyectos',
@@ -33,7 +33,7 @@ module.exports = {
 
       await queryInterface.addConstraint('tareas', {
         fields: ['idUsuario'],
-        name: 'idProyecto_fk',
+        name: 'idUsuario_tfk',
         type: 'foreign key',
         references: {
         table: 'usuarios',
@@ -47,7 +47,7 @@ module.exports = {
 
       await queryInterface.addConstraint('bitacoras', {
         fields: ['idProyecto'],
-        name: 'idProyecto_fk',
+        name: 'idProyecto_bfk',
         type: 'foreign key',
         references: {
         table: 'proyectos',
@@ -59,7 +59,7 @@ module.exports = {
 
       await queryInterface.addConstraint('bitacoras', {
         fields: ['idTarea'],
-        name: 'idTarea_fk',
+        name: 'idTarea_bfk',
         type: 'foreign key',
         references: {
         table: 'tareas',
@@ -73,7 +73,7 @@ module.exports = {
 
       await queryInterface.addConstraint('adjuntos', {
         fields: ['idBitacora'],
-        name: 'idBitacora_fk',
+        name: 'idBitacora_afk',
         type: 'foreign key',
         references: {
         table: 'bitacoras',
@@ -85,11 +85,11 @@ module.exports = {
   },
 
   async down (queryInterface, Sequelize) {
-    await queryInterface.removeConstraint('proyectos', 'foto_id_fk')
-    await queryInterface.removeConstraint('tareas', 'etiqueta_id_fk')
-    await queryInterface.removeConstraint('tareas', 'etiqueta_id_fk')
-    await queryInterface.removeConstraint('bitacoras', 'etiqueta_id_fk')
-    await queryInterface.removeConstraint('bitacoras', 'etiqueta_id_fk')
-    await queryInterface.removeConstraint('adjuntos', 'etiqueta_id_fk')
+    await queryInterface.removeConstraint('proyectos', 'usuarioIdp_fk')
+    await queryInterface.removeConstraint('tareas', 'idProyecto_tfk')
+    await queryInterface.removeConstraint('tareas', 'idUsuario_tfk')
+    await queryInterface.removeConstraint('bitacoras', 'idProyecto_bfk')
+    await queryInterface.removeConstraint('bitacoras', 'idTarea_bfk')
+    await queryInterface.removeConstraint('adjuntos', 'idBitacora_afk')
   }
 };
