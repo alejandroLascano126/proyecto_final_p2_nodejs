@@ -10,7 +10,9 @@ module.exports = (sequelize, DataTypes) => {
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      // define association here
+      models.bitacoras.belongsTo(models.tareas, { foreignKey: 'idTarea', targetKey: 'id' });
+      models.bitacoras.belongsTo(models.proyectos, { foreignKey: 'idProyecto', targetKey: 'id' });
+      models.bitacoras.hasMany(models.adjuntos, { foreignKey: 'idBitacora', sourceKey: 'id' });
     }
   }
   bitacoras.init({
