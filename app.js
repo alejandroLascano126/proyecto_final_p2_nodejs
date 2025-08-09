@@ -9,6 +9,7 @@ var usersRouter = require('./routes/users');
 var usuariosRouter = require('./routes/rest/usuarios')
 var administradorDeProyectosRouter = require('./routes/rest/administradorDeProyectos')
 var proyectosRouter = require('./routes/rest/proyectos')
+var tareasRouter = require('./routes/rest/tareas')
 
 var app = express();
 
@@ -27,6 +28,7 @@ app.use('/users', usersRouter);
 app.use('/rest/usuarios', usuariosRouter);
 app.use('/rest/administradorDeProyectos', administradorDeProyectosRouter);
 app.use('/rest/proyectos', proyectosRouter);
+app.use('/rest/tareas', tareasRouter)
 
 
 // catch 404 and forward to error handler
