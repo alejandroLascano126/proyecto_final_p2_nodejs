@@ -3,6 +3,7 @@ var router = express.Router();
 const Usuario = require('../../models').usuarios;
 const { Op } = require('sequelize');
 
+
 router.get('/consultaUsuarios', function (req, res, next) {
   Usuario.findAll({
     attributes: { exclude: ["updatedAt"] },
@@ -92,5 +93,26 @@ router.delete('/eliminarUsuario/:id', function (req, res, next) {
   }).catch(error => res.status(400).send(error))
 });
 
+router.post('/login', async function (req, res) {
+  console.log(req.body);
+  const { usuario, correo, clave } = req.body;
+  try {
+    // Permite login por usuario o correo
+    const where = {};
+    if (usuario) where.usuario = usuario;
+    if (correo) where.correo = correo;
+    where.clave = clave;
+
+    const user = await Usuario.findOne({ where });
+    if (!user) {
+      return res.status(401).json({ error: 'Usuario o clave incorrectos' });
+    }
+    // No envíes la clave al frontend
+    const { clave: _, ...userData } = user.toJSON();
+    res.json({ usuario: userData });
+  } catch (err) {
+    res.status(500).json({ error: 'Error en el servidor' });
+  }
+});
 
 module.exports = router;

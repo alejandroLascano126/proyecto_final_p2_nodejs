@@ -1,0 +1,70 @@
+<style>
+                .sidebar {
+                    position: fixed;
+                    top: 56px; /* altura del navbar */
+                    left: 0;
+                    width: 200px;
+                    height: calc(100vh - 56px);
+                    background: #2563eb;
+                    color: #fff;
+                    display: flex;
+                    flex-direction: column;
+                    box-shadow: 2px 0 16px 0 rgba(60,72,88,0.08);
+                    border-radius: 0 1rem 1rem 0;
+                    z-index: 1030;
+                    padding-bottom: 1rem;
+                }
+            .sidebar-header {
+                text-align: center;
+                padding: 2rem 1rem 1rem 1rem;
+                border-bottom: 1px solid #1e40af;
+            }
+            .sidebar h4 {
+                color: #fff;
+                font-weight: 700;
+                margin-bottom: 0;
+                letter-spacing: 1px;
+                font-size: 1rem;
+            }
+            .sidebar .nav-link {
+                color: #fff;
+                font-size: 1rem;
+                padding: 1rem 2rem;
+                border-radius: 0.5rem;
+                margin: 0.25rem 1rem;
+                transition: background 0.2s, color 0.2s;
+                font-weight: 500;
+            }
+            .sidebar .nav-link.active, .sidebar .nav-link:hover {
+                background: #1e40af;
+                color: #fff;
+                font-weight: 600;
+            }
+    .sidebar .mt-auto {
+        margin-top: auto;
+    }
+    @media (max-width: 991.98px) {
+        .sidebar {
+            position: static;
+            width: 100%;
+            height: auto;
+            border-radius: 1rem 1rem 0 0;
+            top: 0;
+        }
+    }
+</style>
+<nav class="sidebar">
+            <div class="sidebar-header">
+                <h4>Dashboard</h4>
+            </div>
+    <ul class="nav flex-column mb-auto">
+        <li class="nav-item"><a href="/dashboard/usuarios" class="nav-link">Usuarios</a></li>
+        <li class="nav-item"><a href="/dashboard/proyectos" class="nav-link">Proyectos</a></li>
+        <li class="nav-item"><a href="/dashboard/tareas" class="nav-link">Tareas</a></li>
+        <li class="nav-item"><a href="/dashboard/bitacoras" class="nav-link">Bitácoras</a></li>
+        <li class="nav-item"><a href="/dashboard/adjuntos" class="nav-link">Adjuntos</a></li>
+    </ul>
+    <div class="mt-auto text-center pb-3">
+        <a href="/logout" class="btn btn-outline-light btn-sm">Cerrar sesión</a>
+    </div>
+</nav>

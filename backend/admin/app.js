@@ -33,6 +33,7 @@ app.use('/rest/proyectos', proyectosRouter);
 app.use('/rest/tareas', tareasRouter)
 app.use('/rest/bitacoras', bitacorasRouter)
 app.use('/rest/adjuntos', adjuntosRouter)
+app.use('/api/usuarios', require('./routes/rest/usuarios'));
 
 
 // catch 404 and forward to error handler
