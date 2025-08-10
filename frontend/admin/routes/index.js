@@ -52,7 +52,7 @@ router.get('/dashboard/adjuntos', isAuthenticated, function(req, res, next) {
 router.post('/login', async function(req, res, next) {
   const { correo, clave } = req.body;
   try {
-    const response = await axios.post('http://localhost:3000/api/usuarios/login', { correo, clave });
+    const response = await axios.post('http://localhost:3000/rest/usuarios/login', { correo, clave });
     req.session.user = response.data.usuario;
     res.redirect('/dashboard');
   } catch (err) {
@@ -65,7 +65,7 @@ router.post('/login', async function(req, res, next) {
 router.post('/register', async function(req, res, next) {
   const { usuario, clave, nombre, apellido, correo } = req.body;
   try {
-    const response = await axios.post('http://localhost:3000/api/usuarios/registraUsuario', {
+    const response = await axios.post('http://localhost:3000/rest/usuarios/registraUsuario', {
       usuario,
       clave,
       nombre,
