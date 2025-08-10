@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Dashboard | Gestor de Proyectos</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="/stylesheets/style.css" />
+        <style>
+            body {
+                background: linear-gradient(120deg, #f8fafc 0%, #e0e7ef 100%);
+                min-height: 100vh;
+            }
+            .navbar {
+                border-radius: 0 0 1rem 1rem;
+                box-shadow: 0 2px 8px 0 rgba(60,72,88,0.08);
+            }
+            .navbar.fixed-top {
+                border-radius: 0;
+            }
+            .main-content {
+                margin-left: 200px;
+                padding: 2.5rem 3rem 2.5rem 3rem;
+                min-height: 100vh;
+                background: #f8f9fa;
+                border-radius: 1rem 0 0 1rem;
+                box-shadow: 0 2px 16px 0 rgba(60,72,88,0.08);
+                width: calc(100vw - 200px);
+                max-width: 100vw;
+            }
+            .sidebar {
+                box-shadow: 2px 0 16px 0 rgba(60,72,88,0.08);
+                border-radius: 0 1rem 1rem 0;
+            }
+            @media (max-width: 991.98px) {
+                .main-content {
+                    margin-left: 0;
+                    border-radius: 1rem;
+                }
+                .sidebar {
+                    position: static !important;
+                    width: 100% !important;
+                    border-radius: 1rem 1rem 0 0;
+                }
+            }
+        </style>
+    </head>
+    <body>
+            <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top shadow-sm" style="font-size:1rem;">
+                <div class="container-fluid">
+                    <a class="navbar-brand fw-bold" href="/dashboard" style="font-size:1rem;">Gestor de Proyectos</a>
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                    <div class="collapse navbar-collapse" id="navbarNav">
+                        <ul class="navbar-nav ms-auto">
+                            <li class="nav-item">
+                                <a class="nav-link" href="/">Cerrar sesión</a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+        <%- include('partials/sidebar') %>
+        <div class="main-content mt-5">
+            <%- body %>
+        </div>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    </body>
+</html>

@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Iniciar Sesión / Registrarse</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+    <style>
+      body {
+        background: linear-gradient(120deg, #f8fafc 0%, #e0e7ef 100%);
+        min-height: 100vh;
+      }
+      .accordion {
+        background: transparent;
+      }
+      .accordion-item {
+        border: none;
+        background: transparent;
+        box-shadow: 0 2px 16px 0 rgba(60,72,88,0.08);
+        margin-bottom: 1.5rem;
+        border-radius: 1rem;
+        overflow: hidden;
+      }
+      .accordion-button {
+        background: #fff;
+        color: #22223b;
+        font-weight: 600;
+        font-size: 1.2rem;
+        border: none;
+        box-shadow: none;
+        border-radius: 0;
+        padding: 1.2rem 1.5rem;
+      }
+      .accordion-button:not(.collapsed) {
+        color: #2563eb;
+        background: #f1f5f9;
+      }
+      .accordion-body {
+        background: #fff;
+        padding: 2rem 1.5rem 1.5rem 1.5rem;
+        border-radius: 0 0 1rem 1rem;
+      }
+      .form-label {
+        font-weight: 500;
+        color: #22223b;
+      }
+      .form-control {
+        border-radius: 0.75rem;
+        border: 1px solid #e0e7ef;
+        background: #f8fafc;
+        font-size: 1rem;
+        padding: 0.75rem 1rem;
+        margin-bottom: 0.5rem;
+      }
+      .form-control:focus {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 2px #2563eb33;
+        background: #fff;
+      }
+      .btn-primary, .btn-success {
+        border-radius: 0.75rem;
+        font-weight: 600;
+        font-size: 1.1rem;
+        padding: 0.75rem 0;
+        box-shadow: 0 2px 8px 0 rgba(37,99,235,0.08);
+        transition: background 0.2s;
+      }
+      .btn-primary:hover, .btn-success:hover {
+        filter: brightness(0.95);
+      }
+      .navbar {
+        border-radius: 0 0 1rem 1rem;
+        box-shadow: 0 2px 8px 0 rgba(60,72,88,0.08);
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top shadow-sm">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="/">Gestor de Proyectos</a>
+      </div>
+    </nav>
+    <div style="height: 70px;"></div>
+    <div class="container mt-5">
+      <div class="row justify-content-center">
+        <div class="col-md-6">
+          <div class="accordion" id="accordionLoginRegister">
+            <div class="accordion-item">
+              <h2 class="accordion-header" id="headingLogin">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseLogin" aria-expanded="true" aria-controls="collapseLogin">
+                  Iniciar Sesión
+                </button>
+              </h2>
+              <div id="collapseLogin" class="accordion-collapse collapse show" aria-labelledby="headingLogin" data-bs-parent="#accordionLoginRegister">
+                <div class="accordion-body">
+                  <form method="POST" action="/login">
+                    <div class="mb-3">
+                      <label for="correo_login" class="form-label">Correo</label>
+                      <input type="email" class="form-control" id="correo_login" name="correo" required>
+                    </div>
+                    <div class="mb-3">
+                      <label for="clave" class="form-label">Contraseña</label>
+                      <input type="password" class="form-control" id="clave" name="clave" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Ingresar</button>
+                  </form>
+                </div>
+              </div>
+            </div>
+            <div class="accordion-item">
+              <h2 class="accordion-header" id="headingRegister">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseRegister" aria-expanded="false" aria-controls="collapseRegister">
+                  Registrarse
+                </button>
+              </h2>
+              <div id="collapseRegister" class="accordion-collapse collapse" aria-labelledby="headingRegister" data-bs-parent="#accordionLoginRegister">
+                <div class="accordion-body">
+                  <form method="POST" action="/register">
+                    <div class="mb-3">
+                      <label for="usuario_reg" class="form-label">Usuario</label>
+                      <input type="text" class="form-control" id="usuario_reg" name="usuario" required>
+                    </div>
+                    <div class="mb-3">
+                      <label for="clave_reg" class="form-label">Contraseña</label>
+                      <input type="password" class="form-control" id="clave_reg" name="clave" required>
+                    </div>
+                    <div class="mb-3">
+                      <label for="nombre" class="form-label">Nombre</label>
+                      <input type="text" class="form-control" id="nombre" name="nombre" required>
+                    </div>
+                    <div class="mb-3">
+                      <label for="apellido" class="form-label">Apellido</label>
+                      <input type="text" class="form-control" id="apellido" name="apellido" required>
+                    </div>
+                    <div class="mb-3">
+                      <label for="correo" class="form-label">Correo</label>
+                      <input type="email" class="form-control" id="correo" name="correo" required>
+                    </div>
+                    <button type="submit" class="btn btn-success w-100">Registrarse</button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>
