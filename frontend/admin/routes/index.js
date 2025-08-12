@@ -102,23 +102,26 @@ router.post('/register', async function (req, res, next) {
 });
 
 // Actualiza un usuario
-router.post('/actualizaUsuario', async function (req, res, next) {
-  const { idUsuario, usuario, nombre, apellido, correo, clave, nivel } = req.body;
+router.put('/actualizarUsuarios', async (req, res) => {
+  const usuarios = req.body; // Array con objetos { id, campo1, campo2, ... }
+  const usuarioSesion = req.session.user;
+
+  if (!usuarioSesion) {
+    return res.status(401).json({ error: 'No autorizado. Debes iniciar sesión.' });
+  }
+  if (usuarioSesion.nivel !== 1) {
+    return res.status(403).json({ error: 'No tienes permisos para actualizar usuarios.' });
+  }
 
   try {
-    await axios.put(`http://localhost:3000/rest/usuarios/actualizaUsuario/${idUsuario}`, {
-      usuario,
-      clave,
-      nombre,
-      apellido,
-      correo,
-      nivel: nivel || 1
-    });
-
-    res.redirect('/dashboard');
-  } catch (err) {
-    console.error('Error actualizando usuario:', err.message);
-    res.redirect('/dashboard');
+    for (const u of usuarios) {
+      // Asumiendo que tu API REST acepta PUT a /rest/usuarios/actualizarUsuario/:id
+      await axios.put(`http://localhost:3000/rest/usuarios/actualizaUsuario/${u.id}`, u);
+    }
+    res.json({ mensaje: 'Usuarios actualizados correctamente' });
+  } catch (error) {
+    console.error('Error actualizando usuarios:', error);
+    res.status(500).json({ error: 'Error actualizando usuarios' });
   }
 });
 
