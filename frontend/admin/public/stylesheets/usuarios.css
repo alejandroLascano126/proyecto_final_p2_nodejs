@@ -1,44 +1,52 @@
 #tablaUsuarios {
-            border-radius: 0.75rem;
-            overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-            background: white;
-        }
+    border-radius: 0.75rem;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    background: white;
+}
 
-        #tablaUsuarios th,
-        #tablaUsuarios td {
-            vertical-align: middle;
-            padding: 0.75rem 1rem;
-            font-size: 0.9rem;
-            color: #212529;
-        }
+#tablaUsuarios th,
+#tablaUsuarios td {
+    vertical-align: middle;
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+    color: #212529;
+}
 
-        #tablaUsuarios thead th {
-            background-color: #0d6efd;
-            /* Bootstrap primary */
-            color: white;
-            font-weight: 600;
-            border-color: #0b5ed7;
-        }
+#tablaUsuarios thead th {
+    background-color: #0d6efd;
+    /* Bootstrap primary */
+    color: white;
+    font-weight: 600;
+    border-color: #0b5ed7;
+}
 
-        #tablaUsuarios tbody tr:hover {
-            background-color: #e7f1ff;
-            cursor: pointer;
-        }
+#tablaUsuarios tbody tr:hover {
+    background-color: #e7f1ff;
+    cursor: pointer;
+}
 
-        /* Scroll horizontal para pantallas pequeñas */
-        .table-responsive {
-            overflow-x: auto;
-            border-radius: 0.75rem;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-        }
+/* Scroll horizontal para pantallas pequeñas */
+.table-responsive {
+    overflow-x: auto;
+    border-radius: 0.75rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
 
-        /* Fila seleccionada */
-        tr.selected {
-            background-color: #ffd966 !important;
-        }
+/* Botones */
+#btnRegistrar,
+#btnEnviarNuevo,
+#btnEliminar {
+    margin-bottom: 1rem;
+    margin-right: 0.5rem;
+}
 
-        /* Botón borrar */
-        #btnEliminar {
-            margin-bottom: 1rem;
-        }
+/* Fila nueva editable */
+tr.nueva-fila td {
+    background-color: #fff3cd;
+}
+
+/* Fila seleccionada para eliminar */
+tr.selected {
+    background-color: #ffd966 !important;
+}

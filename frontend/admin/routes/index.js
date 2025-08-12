@@ -4,12 +4,12 @@ var router = express.Router();
 const axios = require('axios');
 
 // Home page
-router.get('/', function(req, res, next) {
+router.get('/', function (req, res, next) {
   res.render('index', { title: 'Gestor de Proyectos' });
 });
 
 // Login page
-router.get('/login', function(req, res, next) {
+router.get('/login', function (req, res, next) {
   res.render('login');
 });
 
@@ -21,7 +21,7 @@ function isAuthenticated(req, res, next) {
 }
 
 // Dashboard principal
-router.get('/dashboard', isAuthenticated, function(req, res, next) {
+router.get('/dashboard', isAuthenticated, function (req, res, next) {
   res.render('dashboard', { body: '' });
 });
 
@@ -33,7 +33,7 @@ router.get('/dashboard', isAuthenticated, function(req, res, next) {
 router.get('/dashboard/usuarios', isAuthenticated, async function (req, res, next) {
   try {
     const usuarios = await consultaUsuarios();
-    require('ejs').renderFile(__dirname + '/../views/partials/usuarios.ejs',{ usuarios },{},
+    require('ejs').renderFile(__dirname + '/../views/partials/usuarios.ejs', { usuarios }, {},
       function (err, str) {
         if (err) return next(err);
         res.render('dashboard', { body: str });
@@ -43,26 +43,34 @@ router.get('/dashboard/usuarios', isAuthenticated, async function (req, res, nex
     next(err);
   }
 });
-router.get('/dashboard/proyectos', isAuthenticated, function(req, res, next) {
-  res.render('dashboard', { body: require('ejs').renderFile(
-    __dirname + '/../views/partials/proyectos.ejs', {}, {}, function(err, str) { return str; }) });
+router.get('/dashboard/proyectos', isAuthenticated, function (req, res, next) {
+  res.render('dashboard', {
+    body: require('ejs').renderFile(
+      __dirname + '/../views/partials/proyectos.ejs', {}, {}, function (err, str) { return str; })
+  });
 });
-router.get('/dashboard/tareas', isAuthenticated, function(req, res, next) {
-  res.render('dashboard', { body: require('ejs').renderFile(
-    __dirname + '/../views/partials/tareas.ejs', {}, {}, function(err, str) { return str; }) });
+router.get('/dashboard/tareas', isAuthenticated, function (req, res, next) {
+  res.render('dashboard', {
+    body: require('ejs').renderFile(
+      __dirname + '/../views/partials/tareas.ejs', {}, {}, function (err, str) { return str; })
+  });
 });
-router.get('/dashboard/bitacoras', isAuthenticated, function(req, res, next) {
-  res.render('dashboard', { body: require('ejs').renderFile(
-    __dirname + '/../views/partials/bitacoras.ejs', {}, {}, function(err, str) { return str; }) });
+router.get('/dashboard/bitacoras', isAuthenticated, function (req, res, next) {
+  res.render('dashboard', {
+    body: require('ejs').renderFile(
+      __dirname + '/../views/partials/bitacoras.ejs', {}, {}, function (err, str) { return str; })
+  });
 });
-router.get('/dashboard/adjuntos', isAuthenticated, function(req, res, next) {
-  res.render('dashboard', { body: require('ejs').renderFile(
-    __dirname + '/../views/partials/adjuntos.ejs', {}, {}, function(err, str) { return str; }) });
+router.get('/dashboard/adjuntos', isAuthenticated, function (req, res, next) {
+  res.render('dashboard', {
+    body: require('ejs').renderFile(
+      __dirname + '/../views/partials/adjuntos.ejs', {}, {}, function (err, str) { return str; })
+  });
 });
 
 
 // Login: solo por correo y clave
-router.post('/login', async function(req, res, next) {
+router.post('/login', async function (req, res, next) {
   const { correo, clave } = req.body;
   try {
     const response = await axios.post('http://localhost:3000/rest/usuarios/login', { correo, clave });
@@ -75,7 +83,7 @@ router.post('/login', async function(req, res, next) {
 
 
 // Registro: enviar los campos como llegan del formulario
-router.post('/register', async function(req, res, next) {
+router.post('/register', async function (req, res, next) {
   const { usuario, clave, nombre, apellido, correo } = req.body;
   try {
     const response = await axios.post('http://localhost:3000/rest/usuarios/registraUsuario', {
@@ -94,7 +102,7 @@ router.post('/register', async function(req, res, next) {
 });
 
 // Actualiza un usuario
-router.post('/actualizaUsuario', async function(req, res, next) {
+router.post('/actualizaUsuario', async function (req, res, next) {
   const { idUsuario, usuario, nombre, apellido, correo, clave, nivel } = req.body;
 
   try {
@@ -115,7 +123,7 @@ router.post('/actualizaUsuario', async function(req, res, next) {
 });
 
 // Eliminar un usuario
-router.post('/eliminarUsuario', async function(req, res, next) {
+router.post('/eliminarUsuario', async function (req, res, next) {
   const { idUsuario } = req.body;
   const usuarioSesion = req.session.user;
 
@@ -137,6 +145,26 @@ router.post('/eliminarUsuario', async function(req, res, next) {
   } catch (err) {
     console.error('Error eliminando usuario:', err.message);
     return res.status(500).json({ error: 'Error interno al eliminar usuario.' });
+  }
+});
+
+
+// Registro: enviar los campos como llegan del formulario
+router.post('/registerAdmin', async function (req, res, next) {
+  const { usuario, clave, nombre, apellido, correo } = req.body;
+  try {
+    const response = await axios.post('http://localhost:3000/rest/usuarios/registraUsuario', {
+      usuario,
+      clave,
+      nombre,
+      apellido,
+      correo,
+      nivel: 1
+    });
+
+    res.status(201).json({ mensaje: 'Usuario registrado correctamente' });
+  } catch (err) {
+    res.status(500).json({ error: 'Error al registrar usuario' });
   }
 });
 
