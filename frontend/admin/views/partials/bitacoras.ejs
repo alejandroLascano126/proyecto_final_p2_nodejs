@@ -1,82 +1,137 @@
 <div class="container">
-  <h2 class="mb-3">Bitácoras</h2>
 
-  <div class="card mb-3">
-    <div class="card-body">
-      <form id="formBitacora" class="row g-3">
-        <div class="col-md-3">
-          <label class="form-label">Proyecto</label>
-          <select id="b-proyecto" class="form-select" required></select>
-        </div>
-        <div class="col-md-3">
-          <label class="form-label">Tarea</label>
-          <select id="b-tarea" class="form-select" required></select>
-        </div>
-        <div class="col-md-3">
-          <label class="form-label">Título</label>
-          <input id="b-titulo" class="form-control" required />
-        </div>
-        <div class="col-md-3">
-          <label class="form-label">Descripción</label>
-          <input id="b-descripcion" class="form-control" />
-        </div>
-        <div class="col-12">
-          <button class="btn btn-primary" type="submit">Crear bitácora</button>
-          <button class="btn btn-secondary d-none" id="b-cancelarEdit" type="button">Cancelar edición</button>
-        </div>
-      </form>
-    </div>
+  <!-- Header -->
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <h2 class="mb-0">Bitácoras</h2>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalBitacora">
+      <i class="bi bi-plus-lg me-1"></i> Nueva Bitácora
+    </button>
   </div>
 
+  <!-- Card tabla -->
   <div class="card">
     <div class="card-body">
-      <table class="table table-striped" id="tablaBitacoras">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Proyecto</th>
-            <th>Tarea</th>
-            <th>Título</th>
-            <th>Descripción</th>
-            <th>Creado</th>
-            <th style="width:160px;">Acciones</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+
+      <!-- Filtros (opcionales) -->
+      <div class="row g-2 mb-3">
+        <div class="col-md-4">
+          <input id="filtroTitulo" class="form-control" placeholder="Buscar por título..." />
+        </div>
+        <div class="col-md-4">
+          <select id="filtroProyecto" class="form-select">
+            <option value="">Todos los proyectos</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <select id="filtroTarea" class="form-select">
+            <option value="">Todas las tareas</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Tabla -->
+      <div class="table-responsive">
+        <table class="table table-hover align-middle" id="tablaBitacoras">
+          <thead class="table-light">
+            <tr>
+              <th style="width:80px">ID</th>
+              <th style="min-width:160px">Proyecto</th>
+              <th style="min-width:160px">Tarea</th>
+              <th style="min-width:200px">Título</th>
+              <th>Descripción</th>
+              <th style="width:180px">Creado</th>
+              <th style="width:140px">Acciones</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
     </div>
   </div>
 </div>
 
-<script>
-(async function() {
-  const $proyecto = document.getElementById('b-proyecto');
-  const $tarea    = document.getElementById('b-tarea');
-  const $titulo   = document.getElementById('b-titulo');
-  const $desc     = document.getElementById('b-descripcion');
-  const $form     = document.getElementById('formBitacora');
-  const $cancel   = document.getElementById('b-cancelarEdit');
-  const $tbody    = document.querySelector('#tablaBitacoras tbody');
+<!-- Modal Crear/Editar -->
+<div class="modal fade" id="modalBitacora" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <form id="formBitacora">
+        <div class="modal-header">
+          <h5 class="modal-title" id="mb-title">Nueva Bitácora</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Proyecto *</label>
+              <select id="b-proyecto" class="form-select" required></select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Tarea *</label>
+              <select id="b-tarea" class="form-select" required></select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Título *</label>
+              <input id="b-titulo" class="form-control" required />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Descripción</label>
+              <input id="b-descripcion" class="form-control" />
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Cancelar</button>
+          <button class="btn btn-primary" type="submit">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
 
+<!-- Script -->
+<script>
+(function() {
   let editId = null;
+  const $tbody = document.querySelector('#tablaBitacoras tbody');
+  const $proyecto = document.getElementById('b-proyecto');
+  const $tarea = document.getElementById('b-tarea');
+  const $titulo = document.getElementById('b-titulo');
+  const $desc = document.getElementById('b-descripcion');
+  const $form = document.getElementById('formBitacora');
+
+  const $fTitulo = document.getElementById('filtroTitulo');
+  const $fProyecto = document.getElementById('filtroProyecto');
+  const $fTarea = document.getElementById('filtroTarea');
+
+  const modalEl = document.getElementById('modalBitacora');
+  const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+
+  async function fetchJSON(url, opts) {
+    const r = await fetch(url, opts);
+    return r.json();
+  }
 
   async function cargarProyectos() {
-    const r = await fetch('/api/proyectos/consultaProyectos');
-    const data = await r.json();
-    $proyecto.innerHTML = '<option value="">--Seleccione--</option>' + data.map(p => `<option value="${p.id}">${p.nombre}</option>`).join('');
+    const data = await fetchJSON('/api/proyectos/consultaProyectos');
+    const opts = data.map(p => `<option value="${p.id}">${p.nombre}</option>`).join('');
+    $proyecto.innerHTML = '<option value="">--Seleccione--</option>' + opts;
+    $fProyecto.innerHTML = '<option value="">Todos los proyectos</option>' + opts;
   }
 
   async function cargarTareas() {
-    const r = await fetch('/api/tareas/consultaTareas');
-    const data = await r.json();
-    $tarea.innerHTML = '<option value="">--Seleccione--</option>' + data.map(t => `<option value="${t.id}">${t.nombre}</option>`).join('');
+    const data = await fetchJSON('/api/tareas/consultaTareas');
+    const opts = data.map(t => `<option value="${t.id}">${t.nombre}</option>`).join('');
+    $tarea.innerHTML = '<option value="">--Seleccione--</option>' + opts;
+    $fTarea.innerHTML = '<option value="">Todas las tareas</option>' + opts;
   }
 
-  async function cargarBitacoras() {
-    const r = await fetch('/api/bitacoras/consultaBitacoras');
-    const data = await r.json();
-    if (data.respuesta) { $tbody.innerHTML = ''; return; }
-    $tbody.innerHTML = data.map(b => `
+  function pintaFilas(bitacoras) {
+    if (!bitacoras || bitacoras.respuesta) {
+      $tbody.innerHTML = '';
+      return;
+    }
+    $tbody.innerHTML = bitacoras.map(b => `
       <tr>
         <td>${b.id}</td>
         <td>${b.proyecto ? b.proyecto.nombre : b.idProyecto}</td>
@@ -84,14 +139,34 @@
         <td>${b.titulo || ''}</td>
         <td>${b.descripcion || ''}</td>
         <td>${new Date(b.createdAt).toLocaleString()}</td>
-        <td>
-          <button class="btn btn-sm btn-outline-primary" data-action="edit" data-id="${b.id}">Editar</button>
-          <button class="btn btn-sm btn-outline-danger"  data-action="del"  data-id="${b.id}">Eliminar</button>
+        <td class="text-nowrap">
+          <button class="btn btn-sm btn-outline-primary me-1" data-action="edit" data-id="${b.id}">
+            <i class="bi bi-pencil"></i>
+          </button>
+          <button class="btn btn-sm btn-outline-danger" data-action="del" data-id="${b.id}">
+            <i class="bi bi-trash"></i>
+          </button>
         </td>
       </tr>
     `).join('');
   }
 
+  async function cargarBitacoras() {
+    const data = await fetchJSON('/api/bitacoras/consultaBitacoras');
+    // filtros en cliente
+    let list = Array.isArray(data) ? data : [];
+    const ft = $fTitulo.value.trim().toLowerCase();
+    const fp = +$fProyecto.value || null;
+    const ftar = +$fTarea.value || null;
+
+    if (ft) list = list.filter(b => (b.titulo || '').toLowerCase().includes(ft));
+    if (fp) list = list.filter(b => (b.idProyecto === fp || (b.proyecto && b.proyecto.id === fp)));
+    if (ftar) list = list.filter(b => (b.idTarea === ftar || (b.tarea && b.tarea.id === ftar)));
+
+    pintaFilas(list);
+  }
+
+  // Crear/Actualizar
   $form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const payload = {
@@ -103,58 +178,65 @@
     if (!payload.idProyecto || !payload.idTarea || !payload.titulo) return;
 
     if (editId) {
-      // solo titulo/descripcion en actualización
-      const r = await fetch(`/api/bitacoras/actualizaBitacora/${editId}`, {
+      await fetchJSON(`/api/bitacoras/actualizaBitacora/${editId}`, {
         method: 'PUT',
         headers: { 'Content-Type':'application/json' },
         body: JSON.stringify({ titulo: payload.titulo, descripcion: payload.descripcion })
       });
-      await r.json();
-      editId = null;
-      $cancel.classList.add('d-none');
     } else {
-      const r = await fetch('/api/bitacoras/crearBitacora', {
+      await fetchJSON('/api/bitacoras/crearBitacora', {
         method: 'POST',
         headers: { 'Content-Type':'application/json' },
         body: JSON.stringify(payload)
       });
-      await r.json();
     }
 
-    $form.reset();
+    editId = null;
+    (e.target).reset();
+    modal.hide();
     await cargarBitacoras();
   });
 
-  $cancel.addEventListener('click', () => {
-    editId = null;
-    $form.reset();
-    $cancel.classList.add('d-none');
-  });
-
+  // Botones tabla
   $tbody.addEventListener('click', async (e) => {
     const btn = e.target.closest('button');
     if (!btn) return;
-    const id = btn.dataset.id;
+    const id = +btn.dataset.id;
 
     if (btn.dataset.action === 'del') {
       if (!confirm('¿Eliminar bitácora?')) return;
-      const r = await fetch(`/api/bitacoras/eliminarBitacora/${id}`, { method: 'DELETE' });
-      await r.json();
+      await fetchJSON(`/api/bitacoras/eliminarBitacora/${id}`, { method: 'DELETE' });
       await cargarBitacoras();
     }
 
     if (btn.dataset.action === 'edit') {
-      // precargar fila en el formulario
-      const fila = btn.closest('tr').children;
-      $titulo.value = fila[3].textContent;
-      $desc.value   = fila[4].textContent;
+      // lee fila
+      const tr = btn.closest('tr').children;
+      $titulo.value = tr[3].textContent.trim();
+      $desc.value   = tr[4].textContent.trim();
+
+      // set selects
+      const proyectoTexto = tr[1].textContent.trim();
+      const tareaTexto = tr[2].textContent.trim();
+      // intentando seleccionar por texto (si coincide)
+      [...$proyecto.options].forEach(o => { if (o.text === proyectoTexto) $proyecto.value = o.value; });
+      [...$tarea.options].forEach(o => { if (o.text === tareaTexto) $tarea.value = o.value; });
+
       editId = id;
-      $cancel.classList.remove('d-none');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      document.getElementById('mb-title').textContent = 'Editar Bitácora';
+      modal.show();
     }
   });
 
-  await Promise.all([cargarProyectos(), cargarTareas()]);
-  await cargarBitacoras();
+  // Filtros
+  [$fTitulo, $fProyecto, $fTarea].forEach(el => el.addEventListener('input', cargarBitacoras));
+  $fProyecto.addEventListener('change', cargarBitacoras);
+  $fTarea.addEventListener('change', cargarBitacoras);
+
+  // Inicial
+  (async function init(){
+    await Promise.all([cargarProyectos(), cargarTareas()]);
+    await cargarBitacoras();
+  })();
 })();
 </script>
