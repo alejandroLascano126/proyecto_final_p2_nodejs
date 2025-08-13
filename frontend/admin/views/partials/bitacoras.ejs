@@ -1,4 +1,160 @@
-<div>
-    <h2>Bitácoras</h2>
-    <!-- Aquí irá el contenido de la sección Bitácoras -->
+<div class="container">
+  <h2 class="mb-3">Bitácoras</h2>
+
+  <div class="card mb-3">
+    <div class="card-body">
+      <form id="formBitacora" class="row g-3">
+        <div class="col-md-3">
+          <label class="form-label">Proyecto</label>
+          <select id="b-proyecto" class="form-select" required></select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Tarea</label>
+          <select id="b-tarea" class="form-select" required></select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Título</label>
+          <input id="b-titulo" class="form-control" required />
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Descripción</label>
+          <input id="b-descripcion" class="form-control" />
+        </div>
+        <div class="col-12">
+          <button class="btn btn-primary" type="submit">Crear bitácora</button>
+          <button class="btn btn-secondary d-none" id="b-cancelarEdit" type="button">Cancelar edición</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <table class="table table-striped" id="tablaBitacoras">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Proyecto</th>
+            <th>Tarea</th>
+            <th>Título</th>
+            <th>Descripción</th>
+            <th>Creado</th>
+            <th style="width:160px;">Acciones</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
 </div>
+
+<script>
+(async function() {
+  const $proyecto = document.getElementById('b-proyecto');
+  const $tarea    = document.getElementById('b-tarea');
+  const $titulo   = document.getElementById('b-titulo');
+  const $desc     = document.getElementById('b-descripcion');
+  const $form     = document.getElementById('formBitacora');
+  const $cancel   = document.getElementById('b-cancelarEdit');
+  const $tbody    = document.querySelector('#tablaBitacoras tbody');
+
+  let editId = null;
+
+  async function cargarProyectos() {
+    const r = await fetch('/api/proyectos/consultaProyectos');
+    const data = await r.json();
+    $proyecto.innerHTML = '<option value="">--Seleccione--</option>' + data.map(p => `<option value="${p.id}">${p.nombre}</option>`).join('');
+  }
+
+  async function cargarTareas() {
+    const r = await fetch('/api/tareas/consultaTareas');
+    const data = await r.json();
+    $tarea.innerHTML = '<option value="">--Seleccione--</option>' + data.map(t => `<option value="${t.id}">${t.nombre}</option>`).join('');
+  }
+
+  async function cargarBitacoras() {
+    const r = await fetch('/api/bitacoras/consultaBitacoras');
+    const data = await r.json();
+    if (data.respuesta) { $tbody.innerHTML = ''; return; }
+    $tbody.innerHTML = data.map(b => `
+      <tr>
+        <td>${b.id}</td>
+        <td>${b.proyecto ? b.proyecto.nombre : b.idProyecto}</td>
+        <td>${b.tarea ? b.tarea.nombre : b.idTarea}</td>
+        <td>${b.titulo || ''}</td>
+        <td>${b.descripcion || ''}</td>
+        <td>${new Date(b.createdAt).toLocaleString()}</td>
+        <td>
+          <button class="btn btn-sm btn-outline-primary" data-action="edit" data-id="${b.id}">Editar</button>
+          <button class="btn btn-sm btn-outline-danger"  data-action="del"  data-id="${b.id}">Eliminar</button>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  $form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const payload = {
+      idProyecto: +$proyecto.value,
+      idTarea: +$tarea.value,
+      titulo: $titulo.value.trim(),
+      descripcion: $desc.value.trim()
+    };
+    if (!payload.idProyecto || !payload.idTarea || !payload.titulo) return;
+
+    if (editId) {
+      // solo titulo/descripcion en actualización
+      const r = await fetch(`/api/bitacoras/actualizaBitacora/${editId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type':'application/json' },
+        body: JSON.stringify({ titulo: payload.titulo, descripcion: payload.descripcion })
+      });
+      await r.json();
+      editId = null;
+      $cancel.classList.add('d-none');
+    } else {
+      const r = await fetch('/api/bitacoras/crearBitacora', {
+        method: 'POST',
+        headers: { 'Content-Type':'application/json' },
+        body: JSON.stringify(payload)
+      });
+      await r.json();
+    }
+
+    $form.reset();
+    await cargarBitacoras();
+  });
+
+  $cancel.addEventListener('click', () => {
+    editId = null;
+    $form.reset();
+    $cancel.classList.add('d-none');
+  });
+
+  $tbody.addEventListener('click', async (e) => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    const id = btn.dataset.id;
+
+    if (btn.dataset.action === 'del') {
+      if (!confirm('¿Eliminar bitácora?')) return;
+      const r = await fetch(`/api/bitacoras/eliminarBitacora/${id}`, { method: 'DELETE' });
+      await r.json();
+      await cargarBitacoras();
+    }
+
+    if (btn.dataset.action === 'edit') {
+      // precargar fila en el formulario
+      const fila = btn.closest('tr').children;
+      $titulo.value = fila[3].textContent;
+      $desc.value   = fila[4].textContent;
+      editId = id;
+      $cancel.classList.remove('d-none');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  });
+
+  await Promise.all([cargarProyectos(), cargarTareas()]);
+  await cargarBitacoras();
+})();
+</script>
