@@ -325,4 +325,58 @@ router.get('/api/usuarios/consultaUsuarios', isAuthenticated, async function(req
   }
 });
 
+// ===== RUTAS PROXY PARA BITACORAS =====
+router.get('/api/bitacoras/consultaBitacoras', isAuthenticated, async (req, res) => {
+  try {
+    const r = await axios.get('http://localhost:3000/rest/bitacoras/consultaBitacoras');
+    res.json(r.data);
+  } catch (err) {
+    console.error('proxy consultaBitacoras:', err);
+    res.status(500).json({ error: 'Error al consultar bitácoras' });
+  }
+});
+
+router.get('/api/bitacoras/consultaBitacoraEspecifica', isAuthenticated, async (req, res) => {
+  try {
+    const r = await axios.get('http://localhost:3000/rest/bitacoras/consultaBitacoraEspecifica', { params: req.query });
+    res.json(r.data);
+  } catch (err) {
+    console.error('proxy consultaBitacoraEspecifica:', err);
+    res.status(500).json({ error: 'Error al consultar bitácora específica' });
+  }
+});
+
+router.post('/api/bitacoras/crearBitacora', isAuthenticated, async (req, res) => {
+  try {
+    const r = await axios.post('http://localhost:3000/rest/bitacoras/crearBitacora', req.body);
+    res.json(r.data);
+  } catch (err) {
+    console.error('proxy crearBitacora:', err);
+    res.status(500).json({ error: 'Error al crear bitácora' });
+  }
+});
+
+router.put('/api/bitacoras/actualizaBitacora/:id', isAuthenticated, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const r = await axios.put(`http://localhost:3000/rest/bitacoras/actualizaBitacora/${id}`, req.body);
+    res.json(r.data);
+  } catch (err) {
+    console.error('proxy actualizaBitacora:', err);
+    res.status(500).json({ error: 'Error al actualizar bitácora' });
+  }
+});
+
+router.delete('/api/bitacoras/eliminarBitacora/:id', isAuthenticated, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const r = await axios.delete(`http://localhost:3000/rest/bitacoras/eliminarBitacora/${id}`);
+    res.json(r.data);
+  } catch (err) {
+    console.error('proxy eliminarBitacora:', err);
+    res.status(500).json({ error: 'Error al eliminar bitácora' });
+  }
+});
+
+
 module.exports = router;
