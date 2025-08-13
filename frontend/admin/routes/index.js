@@ -3,6 +3,7 @@ var express = require('express');
 var router = express.Router();
 const axios = require('axios');
 const ejs = require('ejs');
+const path = require('path');
 
 // Home page
 router.get('/', function (req, res, next) {
@@ -54,6 +55,7 @@ router.get('/dashboard/proyectos', isAuthenticated, async function (req, res, ne
     next(err);
   }
 });
+
 router.get('/dashboard/tareas', isAuthenticated, async function (req, res, next) {
   try {
     const body = await ejs.renderFile(__dirname + '/../views/partials/tareas.ejs');
@@ -63,19 +65,36 @@ router.get('/dashboard/tareas', isAuthenticated, async function (req, res, next)
     res.status(500).send('Error al cargar la vista de tareas');
   }
 });
-router.get('/dashboard/bitacoras', isAuthenticated, function (req, res, next) {
-  res.render('dashboard', {
-    body: require('ejs').renderFile(
-      __dirname + '/../views/partials/bitacoras.ejs', {}, {}, function (err, str) { return str; })
-  });
-});
-router.get('/dashboard/adjuntos', isAuthenticated, function (req, res, next) {
-  res.render('dashboard', {
-    body: require('ejs').renderFile(
-      __dirname + '/../views/partials/adjuntos.ejs', {}, {}, function (err, str) { return str; })
-  });
+
+router.get('/dashboard/usuarios', isAuthenticated, async function (req, res, next) {
+  try {
+    const body = await ejs.renderFile(path.join(__dirname, '../views/partials/usuarios.ejs'));
+    res.render('dashboard', { body });
+  } catch (error) {
+    console.error('Error rendering usuarios partial:', error);
+    res.status(500).send('Error al cargar la vista de usuarios');
+  }
 });
 
+router.get('/dashboard/adjuntos', isAuthenticated, async function (req, res, next) {
+  try {
+    const body = await ejs.renderFile(path.join(__dirname, '../views/partials/adjuntos.ejs'));
+    res.render('dashboard', { body });
+  } catch (error) { 
+    console.error('Error rendering adjuntos partial:', error);
+    res.status(500).send('Error al cargar la vista de adjuntos');
+  }
+});
+
+router.get('/dashboard/bitacoras', isAuthenticated, async function (req, res, next) {
+  try {
+    const body = await ejs.renderFile(path.join(__dirname, '../views/partials/bitacoras.ejs'));
+    res.render('dashboard', { body });
+  } catch (error) {
+    console.error('Error rendering bitacoras partial:', error);
+    res.status(500).send('Error al cargar la vista de bitácoras');
+  }
+});
 
 // Login: solo por correo y clave
 router.post('/login', async function (req, res, next) {
