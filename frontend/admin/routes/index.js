@@ -378,5 +378,58 @@ router.delete('/api/bitacoras/eliminarBitacora/:id', isAuthenticated, async (req
   }
 });
 
+// ===== RUTAS PROXY PARA ADJUNTOS =====
+router.get('/api/adjuntos/consultaAdjuntos', isAuthenticated, async (req, res) => {
+  try {
+    const r = await axios.get('http://localhost:3000/rest/adjuntos/consultaAdjuntos', { params: req.query });
+    res.json(r.data);
+  } catch (err) {
+    console.error('proxy consultaAdjuntos:', err);
+    res.status(500).json({ error: 'Error al consultar adjuntos' });
+  }
+});
+
+router.get('/api/adjuntos/consultaAdjuntosEspecifica', isAuthenticated, async (req, res) => {
+  try {
+    const r = await axios.get('http://localhost:3000/rest/adjuntos/consultaAdjuntosEspecifica', { params: req.query });
+    res.json(r.data);
+  } catch (err) {
+    console.error('proxy consultaAdjuntosEspecifica:', err);
+    res.status(500).json({ error: 'Error al consultar adjunto específico' });
+  }
+});
+
+router.post('/api/adjuntos/crearAdjunto', isAuthenticated, async (req, res) => {
+  try {
+    const r = await axios.post('http://localhost:3000/rest/adjuntos/crearAdjunto', req.body);
+    res.json(r.data);
+  } catch (err) {
+    console.error('proxy crearAdjunto:', err);
+    res.status(500).json({ error: 'Error al crear adjunto' });
+  }
+});
+
+router.put('/api/adjuntos/actualizaAdjunto/:id', isAuthenticated, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const r = await axios.put(`http://localhost:3000/rest/adjuntos/actualizaAdjunto/${id}`, req.body);
+    res.json(r.data);
+  } catch (err) {
+    console.error('proxy actualizaAdjunto:', err);
+    res.status(500).json({ error: 'Error al actualizar adjunto' });
+  }
+});
+
+router.delete('/api/adjuntos/eliminarAdjunto/:id', isAuthenticated, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const r = await axios.delete(`http://localhost:3000/rest/adjuntos/eliminarAdjunto/${id}`);
+    res.json(r.data);
+  } catch (err) {
+    console.error('proxy eliminarAdjunto:', err);
+    res.status(500).json({ error: 'Error al eliminar adjunto' });
+  }
+});
+
 
 module.exports = router;
