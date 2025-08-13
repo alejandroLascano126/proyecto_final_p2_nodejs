@@ -2,6 +2,7 @@
 var express = require('express');
 var router = express.Router();
 const axios = require('axios');
+const ejs = require('ejs');
 
 // Home page
 router.get('/', function (req, res, next) {
@@ -32,28 +33,35 @@ router.get('/dashboard', isAuthenticated, function (req, res, next) {
 // });
 router.get('/dashboard/usuarios', isAuthenticated, async function (req, res, next) {
   try {
-    const usuarios = await consultaUsuarios();
-    require('ejs').renderFile(__dirname + '/../views/partials/usuarios.ejs', { usuarios }, {},
-      function (err, str) {
-        if (err) return next(err);
-        res.render('dashboard', { body: str });
-      }
-    );
+    const body = await ejs.renderFile(__dirname + '/../views/partials/usuarios.ejs');
+    res.render('dashboard', { body });
+  } catch (error) {
+    console.error('Error rendering usuarios partial:', error);
+    res.status(500).send('Error al cargar la vista de usuarios');
+  }
+});
+router.get('/dashboard/proyectos', isAuthenticated, async function (req, res, next) {
+  try {
+    const ejs = require('ejs');
+    const fs = require('fs');
+    const path = require('path');
+    
+    const partialPath = path.join(__dirname, '../views/partials/proyectos.ejs');
+    const partialContent = await ejs.renderFile(partialPath, {});
+    
+    res.render('dashboard', { body: partialContent });
   } catch (err) {
     next(err);
   }
 });
-router.get('/dashboard/proyectos', isAuthenticated, function (req, res, next) {
-  res.render('dashboard', {
-    body: require('ejs').renderFile(
-      __dirname + '/../views/partials/proyectos.ejs', {}, {}, function (err, str) { return str; })
-  });
-});
-router.get('/dashboard/tareas', isAuthenticated, function (req, res, next) {
-  res.render('dashboard', {
-    body: require('ejs').renderFile(
-      __dirname + '/../views/partials/tareas.ejs', {}, {}, function (err, str) { return str; })
-  });
+router.get('/dashboard/tareas', isAuthenticated, async function (req, res, next) {
+  try {
+    const body = await ejs.renderFile(__dirname + '/../views/partials/tareas.ejs');
+    res.render('dashboard', { body });
+  } catch (error) {
+    console.error('Error rendering tareas partial:', error);
+    res.status(500).send('Error al cargar la vista de tareas');
+  }
 });
 router.get('/dashboard/bitacoras', isAuthenticated, function (req, res, next) {
   res.render('dashboard', {
@@ -75,7 +83,7 @@ router.post('/login', async function (req, res, next) {
   try {
     const response = await axios.post('http://localhost:3000/rest/usuarios/login', { correo, clave });
     req.session.user = response.data.usuario;
-    res.redirect('/dashboard');
+    res.redirect('/dashboard/proyectos');
   } catch (err) {
     res.render('login', { error: 'Credenciales incorrectas' });
   }
@@ -178,13 +186,143 @@ async function consultaUsuarios() {
   return response.data; // Devuelve los usuarios
 }
 
+// ===== RUTAS PROXY PARA PROYECTOS =====
 
+// Obtener todos los proyectos
+router.get('/api/proyectos/consultaProyectos', isAuthenticated, async function(req, res, next) {
+  try {
+    const response = await axios.get('http://localhost:3000/rest/proyectos/consultaProyectos');
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error consultando proyectos:', error);
+    res.status(500).json({ error: 'Error al consultar proyectos' });
+  }
+});
 
+// Consultar proyecto específico con filtros
+router.get('/api/proyectos/consultaProyectoEspecifico', isAuthenticated, async function(req, res, next) {
+  try {
+    const queryParams = new URLSearchParams(req.query).toString();
+    const response = await axios.get(`http://localhost:3000/rest/proyectos/consultaProyectoEspecifico?${queryParams}`);
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error consultando proyecto específico:', error);
+    res.status(500).json({ error: 'Error al consultar proyecto específico' });
+  }
+});
 
+// Crear nuevo proyecto
+router.post('/api/proyectos/creaProyecto', isAuthenticated, async function(req, res, next) {
+  try {
+    // Agregar el ID del usuario logueado al proyecto
+    const proyectoData = {
+      ...req.body,
+      usuarioId: req.session.user.id
+    };
+    
+    const response = await axios.post('http://localhost:3000/rest/proyectos/creaProyecto', proyectoData);
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error creando proyecto:', error);
+    res.status(500).json({ error: 'Error al crear proyecto' });
+  }
+});
 
+// Actualizar proyecto
+router.put('/api/proyectos/actualizaProyecto/:id', isAuthenticated, async function(req, res, next) {
+  try {
+    const id = req.params.id;
+    const response = await axios.put(`http://localhost:3000/rest/proyectos/actualizaProyecto/${id}`, req.body);
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error actualizando proyecto:', error);
+    res.status(500).json({ error: 'Error al actualizar proyecto' });
+  }
+});
 
+// Eliminar proyecto
+router.delete('/api/proyectos/eliminarProyecto/:id', isAuthenticated, async function(req, res, next) {
+  try {
+    const id = req.params.id;
+    const response = await axios.delete(`http://localhost:3000/rest/proyectos/eliminarProyecto/${id}`);
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error eliminando proyecto:', error);
+    res.status(500).json({ error: 'Error al eliminar proyecto' });
+  }
+});
 
+// ===== RUTAS PROXY PARA TAREAS =====
 
+// Obtener todas las tareas
+router.get('/api/tareas/consultaTareas', isAuthenticated, async function(req, res, next) {
+  try {
+    const response = await axios.get('http://localhost:3000/rest/tareas/consultaTareas');
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error consultando tareas:', error);
+    res.status(500).json({ error: 'Error al consultar tareas' });
+  }
+});
 
+// Consultar tarea específica con filtros
+router.get('/api/tareas/consultaTareaEspecifica', isAuthenticated, async function(req, res, next) {
+  try {
+    const queryParams = new URLSearchParams(req.query).toString();
+    const response = await axios.get(`http://localhost:3000/rest/tareas/consultaTareaEspecifica?${queryParams}`);
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error consultando tarea específica:', error);
+    res.status(500).json({ error: 'Error al consultar tarea específica' });
+  }
+});
+
+// Crear nueva tarea
+router.post('/api/tareas/crearTarea', isAuthenticated, async function(req, res, next) {
+  try {
+    const response = await axios.post('http://localhost:3000/rest/tareas/crearTarea', req.body);
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error creando tarea:', error);
+    res.status(500).json({ error: 'Error al crear tarea' });
+  }
+});
+
+// Actualizar tarea
+router.put('/api/tareas/actualizaTarea/:id', isAuthenticated, async function(req, res, next) {
+  try {
+    const id = req.params.id;
+    const response = await axios.put(`http://localhost:3000/rest/tareas/actualizaTarea/${id}`, req.body);
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error actualizando tarea:', error);
+    res.status(500).json({ error: 'Error al actualizar tarea' });
+  }
+});
+
+// Eliminar tarea
+router.delete('/api/tareas/eliminarTarea/:id', isAuthenticated, async function(req, res, next) {
+  try {
+    const id = req.params.id;
+    const response = await axios.delete(`http://localhost:3000/rest/tareas/eliminarTarea/${id}`);
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error eliminando tarea:', error);
+    res.status(500).json({ error: 'Error al eliminar tarea' });
+  }
+});
+
+// ===== RUTAS PROXY PARA USUARIOS =====
+
+// Obtener todos los usuarios (para los selects)
+router.get('/api/usuarios/consultaUsuarios', isAuthenticated, async function(req, res, next) {
+  try {
+    const response = await axios.get('http://localhost:3000/rest/usuarios/consultaUsuarios');
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error consultando usuarios:', error);
+    res.status(500).json({ error: 'Error al consultar usuarios' });
+  }
+});
 
 module.exports = router;
