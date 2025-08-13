@@ -1,4 +1,156 @@
-<div>
-    <h2>Adjuntos</h2>
-    <!-- Aquí irá el contenido de la sección Adjuntos -->
+<div class="container">
+  <h2 class="mb-3">Adjuntos</h2>
+
+  <div class="card mb-3">
+    <div class="card-body">
+      <form id="formAdjunto" class="row g-3">
+        <div class="col-md-3">
+          <label class="form-label">Bitácora</label>
+          <select id="a-bitacora" class="form-select" required></select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Título</label>
+          <input id="a-titulo" class="form-control" required />
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Extensión</label>
+          <input id="a-extension" class="form-control" placeholder="png, pdf, docx..." />
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Contenido / Ruta</label>
+          <input id="a-contenido" class="form-control" placeholder="ruta/archivo.ext o texto" />
+        </div>
+        <div class="col-12">
+          <button class="btn btn-primary" type="submit">Crear adjunto</button>
+          <button class="btn btn-secondary d-none" id="a-cancelarEdit" type="button">Cancelar edición</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <table class="table table-striped" id="tablaAdjuntos">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Bitácora</th>
+            <th>Título</th>
+            <th>Extensión</th>
+            <th>Contenido</th>
+            <th>Creado</th>
+            <th style="width:160px;">Acciones</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
 </div>
+
+<script>
+(async function() {
+  const $bitacora = document.getElementById('a-bitacora');
+  const $titulo   = document.getElementById('a-titulo');
+  const $ext      = document.getElementById('a-extension');
+  const $cont     = document.getElementById('a-contenido');
+  const $form     = document.getElementById('formAdjunto');
+  const $cancel   = document.getElementById('a-cancelarEdit');
+  const $tbody    = document.querySelector('#tablaAdjuntos tbody');
+
+  let editId = null;
+
+  async function cargarBitacoras() {
+    const r = await fetch('/api/bitacoras/consultaBitacoras');
+    const data = await r.json();
+    if (data.respuesta) { $bitacora.innerHTML = '<option value="">(Sin bitácoras)</option>'; return; }
+    $bitacora.innerHTML = '<option value="">--Seleccione--</option>' +
+      data.map(b => `<option value="${b.id}">#${b.id} - ${b.titulo || '(sin título)'} </option>`).join('');
+  }
+
+  async function cargarAdjuntos() {
+    const r = await fetch('/api/adjuntos/consultaAdjuntos');
+    const data = await r.json();
+    if (data.respuesta) { $tbody.innerHTML = ''; return; }
+    $tbody.innerHTML = data.map(a => `
+      <tr>
+        <td>${a.id}</td>
+        <td>${a.idBitacora}</td>
+        <td>${a.titulo || ''}</td>
+        <td>${a.extension || ''}</td>
+        <td>${a.contenido || ''}</td>
+        <td>${new Date(a.createdAt).toLocaleString()}</td>
+        <td>
+          <button class="btn btn-sm btn-outline-primary" data-action="edit" data-id="${a.id}">Editar</button>
+          <button class="btn btn-sm btn-outline-danger"  data-action="del"  data-id="${a.id}">Eliminar</button>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  $form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const payload = {
+      idBitacora: +$bitacora.value,
+      titulo: $titulo.value.trim(),
+      extension: $ext.value.trim(),
+      contenido: $cont.value.trim()
+    };
+    if (!payload.idBitacora || !payload.titulo) return;
+
+    if (editId) {
+      const r = await fetch(`/api/adjuntos/actualizaAdjunto/${editId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type':'application/json' },
+        body: JSON.stringify({ titulo: payload.titulo, extension: payload.extension, contenido: payload.contenido })
+      });
+      await r.json();
+      editId = null;
+      $cancel.classList.add('d-none');
+    } else {
+      const r = await fetch('/api/adjuntos/crearAdjunto', {
+        method: 'POST',
+        headers: { 'Content-Type':'application/json' },
+        body: JSON.stringify(payload)
+      });
+      await r.json();
+    }
+
+    $form.reset();
+    await cargarAdjuntos();
+  });
+
+  $cancel.addEventListener('click', () => {
+    editId = null;
+    $form.reset();
+    $cancel.classList.add('d-none');
+  });
+
+  $tbody.addEventListener('click', async (e) => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    const id = btn.dataset.id;
+
+    if (btn.dataset.action === 'del') {
+      if (!confirm('¿Eliminar adjunto?')) return;
+      const r = await fetch(`/api/adjuntos/eliminarAdjunto/${id}`, { method: 'DELETE' });
+      await r.json();
+      await cargarAdjuntos();
+    }
+
+    if (btn.dataset.action === 'edit') {
+      const fila = btn.closest('tr').children;
+      $bitacora.value = fila[1].textContent;
+      $titulo.value   = fila[2].textContent;
+      $ext.value      = fila[3].textContent;
+      $cont.value     = fila[4].textContent;
+      editId = id;
+      $cancel.classList.remove('d-none');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  });
+
+  await cargarBitacoras();
+  await cargarAdjuntos();
+})();
+</script>
