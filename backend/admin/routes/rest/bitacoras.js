@@ -105,4 +105,19 @@ router.delete('/eliminarBitacora/:id', async (req, res) => {
   }
 });
 
+// ===== opciones ligeras para combos =====
+router.get('/options', async (req, res) => {
+  try {
+    const rows = await require('../../models').bitacoras.findAll({
+      attributes: ['id', 'titulo'],
+      order: [['id', 'DESC']]
+    });
+    res.json(rows);
+  } catch (e) {
+    console.error('bitacoras/options:', e);
+    res.status(500).json({ error: 'Error cargando opciones de bitácoras' });
+  }
+});
+
+
 module.exports = router;

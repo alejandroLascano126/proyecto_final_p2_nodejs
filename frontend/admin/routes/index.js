@@ -450,5 +450,36 @@ router.delete('/api/adjuntos/eliminarAdjunto/:id', isAuthenticated, async (req, 
   }
 });
 
+// ===== Proxies de opciones ligeras =====
+router.get('/api/proyectos/options', isAuthenticated, async (req, res) => {
+  try {
+    const r = await axios.get('http://localhost:3000/rest/proyectos/options');
+    res.json(r.data);
+  } catch (err) {
+    console.error('proxy proyectos/options:', err?.message || err);
+    res.status(500).json({ error: 'Error al consultar opciones de proyectos' });
+  }
+});
+
+router.get('/api/tareas/options', isAuthenticated, async (req, res) => {
+  try {
+    const r = await axios.get('http://localhost:3000/rest/tareas/options');
+    res.json(r.data);
+  } catch (err) {
+    console.error('proxy tareas/options:', err?.message || err);
+    res.status(500).json({ error: 'Error al consultar opciones de tareas' });
+  }
+});
+
+router.get('/api/bitacoras/options', isAuthenticated, async (req, res) => {
+  try {
+    const r = await axios.get('http://localhost:3000/rest/bitacoras/options');
+    res.json(r.data);
+  } catch (err) {
+    console.error('proxy bitacoras/options:', err?.message || err);
+    res.status(500).json({ error: 'Error al consultar opciones de bitácoras' });
+  }
+});
+
 
 module.exports = router;
