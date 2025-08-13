@@ -104,6 +104,19 @@ router.delete('/eliminarTarea/:id', function (req, res, next) {
   }).catch(error => res.status(400).send(error))
 });
 
+// ===== opciones ligeras para combos =====
+router.get('/options', async (req, res) => {
+  try {
+    const rows = await require('../../models').tareas.findAll({
+      attributes: ['id', 'nombre', 'idProyecto'],
+      order: [['nombre', 'ASC']]
+    });
+    res.json(rows);
+  } catch (e) {
+    console.error('tareas/options:', e);
+    res.status(500).json({ error: 'Error cargando opciones de tareas' });
+  }
+});
 
 
 module.exports = router;

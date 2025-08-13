@@ -1,83 +1,94 @@
 var express = require('express');
 var router = express.Router();
-const Adjunto = require('../../models').adjuntos;
-const { Op, where } = require('sequelize');
 
-router.get('/consultaAdjuntos', function (req, res, next) {
-    Adjunto.findAll()
-        .then(adjuntos => {
-            if (adjuntos.length === 0) {
-                res.json({ respuesta: "No existen datos" });
-            } else {
-                res.json(adjuntos);
-            }
-        }).catch(error => res.status(400).send(error));
-});
+const Adjunto  = require('../../models').adjuntos;
+const Bitacora = require('../../models').bitacoras;
 
-router.get('/consultaAdjuntosEspecifica', function (req, res, next) {
-    let { id, idBitacora, titulo, extension } = req.query;
+router.get('/consultaAdjuntos', async (req, res) => {
+  try {
+    const { idBitacora } = req.query;
+    const where = {};
+    if (idBitacora) where.idBitacora = +idBitacora;
 
-    let valoresFiltros = {};
-
-    if (id) valoresFiltros.id = id;
-    if (idBitacora) valoresFiltros.idBitacora = idBitacora;
-    if (titulo) valoresFiltros.titulo = titulo;
-    if (extension) valoresFiltros.extension = extension;
-
-    Adjunto.findAll({
-        where: valoresFiltros
-    })
-        .then(adjuntos => {
-            if (adjuntos.length === 0) {
-                res.json({ respuesta: "No existen datos" });
-            } else {
-                res.json(adjuntos);
-            }
-        }).catch(error => res.status(400).send(error));
-});
-
-router.post('/crearAdjunto', function (req, res, next) {
-  let { idBitacora, titulo, extension, contenido } = req.body;
-
-  Adjunto.create({
-    idBitacora: idBitacora,
-    titulo: titulo,
-    extension: extension,
-    contenido: contenido,
-    createdAt: new Date(),
-    updatedAt: new Date()
-  }).then(adjuntos => {
+    const adjuntos = await Adjunto.findAll({
+      where,
+      order: [['createdAt', 'DESC']]
+    });
+    if (!adjuntos.length) return res.json({ respuesta: 'No existen datos' });
     res.json(adjuntos);
-  }).catch(error => {
-    console.error('Error al guardar el adjunto:', error);
-    res.status(400).send({ message: 'Error al guardar', error });
-  })
+  } catch (err) {
+    console.error('consultaAdjuntos error:', err);
+    res.status(400).send(err);
+  }
 });
 
-router.put('/actualizaAdjunto/:id', function (req, res) {
-  const id = parseInt(req.params.id);
-  let { titulo } = req.body;
+router.get('/consultaAdjuntosEspecifica', async (req, res) => {
+  try {
+    const { id } = req.query;
+    const where = {};
+    if (id) where.id = +id;
 
-  Adjunto.update({
-    titulo: titulo,
-    updatedAt: new Date()
-  }, {
-    where: { id }
-  })
-  .then(respuesta => res.json(respuesta))
-  .catch(error => res.status(400).send(error));
+    const adjuntos = await Adjunto.findAll({ where });
+    if (!adjuntos.length) return res.json({ respuesta: 'No existen datos' });
+    res.json(adjuntos);
+  } catch (err) {
+    console.error('consultaAdjuntosEspecifica error:', err);
+    res.status(400).send(err);
+  }
 });
 
-router.delete('/eliminarAdjunto/:id', function (req, res, next) {
-  let id = parseInt(req.params.id);
+router.post('/crearAdjunto', async (req, res) => {
+  try {
+    const { idBitacora, titulo, extension, contenido } = req.body;
 
-  Adjunto.destroy({
-    where: { id: id }
-  }).then(respuesta => {
-    res.json(respuesta);
-  }).catch(error => res.status(400).send(error))
+    if (!idBitacora || !titulo) {
+      return res.status(400).json({ error: 'idBitacora y titulo son obligatorios' });
+    }
+
+    const bit = await Bitacora.findByPk(idBitacora);
+    if (!bit) return res.status(400).json({ error: 'Bitácora no existe' });
+
+    const nuevo = await Adjunto.create({
+      idBitacora, titulo, extension, contenido
+    });
+
+    res.status(201).json(nuevo);
+  } catch (err) {
+    console.error('crearAdjunto error:', err);
+    res.status(400).send(err);
+  }
 });
 
+router.put('/actualizaAdjunto/:id', async (req, res) => {
+  try {
+    const id = +req.params.id;
+    const { titulo, extension, contenido } = req.body;
 
+    const encontrado = await Adjunto.findByPk(id);
+    if (!encontrado) return res.status(404).json({ error: 'Adjunto no existe' });
+
+    await Adjunto.update(
+      { titulo, extension, contenido, updatedAt: new Date() },
+      { where: { id } }
+    );
+
+    const refrescado = await Adjunto.findByPk(id);
+    res.json(refrescado);
+  } catch (err) {
+    console.error('actualizaAdjunto error:', err);
+    res.status(400).send(err);
+  }
+});
+
+router.delete('/eliminarAdjunto/:id', async (req, res) => {
+  try {
+    const id = +req.params.id;
+    const count = await Adjunto.destroy({ where: { id } });
+    res.json({ eliminados: count });
+  } catch (err) {
+    console.error('eliminarAdjunto error:', err);
+    res.status(400).send(err);
+  }
+});
 
 module.exports = router;

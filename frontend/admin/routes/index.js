@@ -3,6 +3,7 @@ var express = require('express');
 var router = express.Router();
 const axios = require('axios');
 const ejs = require('ejs');
+const path = require('path');
 
 // Home page
 router.get('/', function (req, res, next) {
@@ -54,6 +55,7 @@ router.get('/dashboard/proyectos', isAuthenticated, async function (req, res, ne
     next(err);
   }
 });
+
 router.get('/dashboard/tareas', isAuthenticated, async function (req, res, next) {
   try {
     const body = await ejs.renderFile(__dirname + '/../views/partials/tareas.ejs');
@@ -63,19 +65,36 @@ router.get('/dashboard/tareas', isAuthenticated, async function (req, res, next)
     res.status(500).send('Error al cargar la vista de tareas');
   }
 });
-router.get('/dashboard/bitacoras', isAuthenticated, function (req, res, next) {
-  res.render('dashboard', {
-    body: require('ejs').renderFile(
-      __dirname + '/../views/partials/bitacoras.ejs', {}, {}, function (err, str) { return str; })
-  });
-});
-router.get('/dashboard/adjuntos', isAuthenticated, function (req, res, next) {
-  res.render('dashboard', {
-    body: require('ejs').renderFile(
-      __dirname + '/../views/partials/adjuntos.ejs', {}, {}, function (err, str) { return str; })
-  });
+
+router.get('/dashboard/usuarios', isAuthenticated, async function (req, res, next) {
+  try {
+    const body = await ejs.renderFile(path.join(__dirname, '../views/partials/usuarios.ejs'));
+    res.render('dashboard', { body });
+  } catch (error) {
+    console.error('Error rendering usuarios partial:', error);
+    res.status(500).send('Error al cargar la vista de usuarios');
+  }
 });
 
+router.get('/dashboard/adjuntos', isAuthenticated, async function (req, res, next) {
+  try {
+    const body = await ejs.renderFile(path.join(__dirname, '../views/partials/adjuntos.ejs'));
+    res.render('dashboard', { body });
+  } catch (error) { 
+    console.error('Error rendering adjuntos partial:', error);
+    res.status(500).send('Error al cargar la vista de adjuntos');
+  }
+});
+
+router.get('/dashboard/bitacoras', isAuthenticated, async function (req, res, next) {
+  try {
+    const body = await ejs.renderFile(path.join(__dirname, '../views/partials/bitacoras.ejs'));
+    res.render('dashboard', { body });
+  } catch (error) {
+    console.error('Error rendering bitacoras partial:', error);
+    res.status(500).send('Error al cargar la vista de bitácoras');
+  }
+});
 
 // Login: solo por correo y clave
 router.post('/login', async function (req, res, next) {
@@ -324,5 +343,143 @@ router.get('/api/usuarios/consultaUsuarios', isAuthenticated, async function(req
     res.status(500).json({ error: 'Error al consultar usuarios' });
   }
 });
+
+// ===== RUTAS PROXY PARA BITACORAS =====
+router.get('/api/bitacoras/consultaBitacoras', isAuthenticated, async (req, res) => {
+  try {
+    const r = await axios.get('http://localhost:3000/rest/bitacoras/consultaBitacoras');
+    res.json(r.data);
+  } catch (err) {
+    console.error('proxy consultaBitacoras:', err);
+    res.status(500).json({ error: 'Error al consultar bitácoras' });
+  }
+});
+
+router.get('/api/bitacoras/consultaBitacoraEspecifica', isAuthenticated, async (req, res) => {
+  try {
+    const r = await axios.get('http://localhost:3000/rest/bitacoras/consultaBitacoraEspecifica', { params: req.query });
+    res.json(r.data);
+  } catch (err) {
+    console.error('proxy consultaBitacoraEspecifica:', err);
+    res.status(500).json({ error: 'Error al consultar bitácora específica' });
+  }
+});
+
+router.post('/api/bitacoras/crearBitacora', isAuthenticated, async (req, res) => {
+  try {
+    const r = await axios.post('http://localhost:3000/rest/bitacoras/crearBitacora', req.body);
+    res.json(r.data);
+  } catch (err) {
+    console.error('proxy crearBitacora:', err);
+    res.status(500).json({ error: 'Error al crear bitácora' });
+  }
+});
+
+router.put('/api/bitacoras/actualizaBitacora/:id', isAuthenticated, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const r = await axios.put(`http://localhost:3000/rest/bitacoras/actualizaBitacora/${id}`, req.body);
+    res.json(r.data);
+  } catch (err) {
+    console.error('proxy actualizaBitacora:', err);
+    res.status(500).json({ error: 'Error al actualizar bitácora' });
+  }
+});
+
+router.delete('/api/bitacoras/eliminarBitacora/:id', isAuthenticated, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const r = await axios.delete(`http://localhost:3000/rest/bitacoras/eliminarBitacora/${id}`);
+    res.json(r.data);
+  } catch (err) {
+    console.error('proxy eliminarBitacora:', err);
+    res.status(500).json({ error: 'Error al eliminar bitácora' });
+  }
+});
+
+// ===== RUTAS PROXY PARA ADJUNTOS =====
+router.get('/api/adjuntos/consultaAdjuntos', isAuthenticated, async (req, res) => {
+  try {
+    const r = await axios.get('http://localhost:3000/rest/adjuntos/consultaAdjuntos', { params: req.query });
+    res.json(r.data);
+  } catch (err) {
+    console.error('proxy consultaAdjuntos:', err);
+    res.status(500).json({ error: 'Error al consultar adjuntos' });
+  }
+});
+
+router.get('/api/adjuntos/consultaAdjuntosEspecifica', isAuthenticated, async (req, res) => {
+  try {
+    const r = await axios.get('http://localhost:3000/rest/adjuntos/consultaAdjuntosEspecifica', { params: req.query });
+    res.json(r.data);
+  } catch (err) {
+    console.error('proxy consultaAdjuntosEspecifica:', err);
+    res.status(500).json({ error: 'Error al consultar adjunto específico' });
+  }
+});
+
+router.post('/api/adjuntos/crearAdjunto', isAuthenticated, async (req, res) => {
+  try {
+    const r = await axios.post('http://localhost:3000/rest/adjuntos/crearAdjunto', req.body);
+    res.json(r.data);
+  } catch (err) {
+    console.error('proxy crearAdjunto:', err);
+    res.status(500).json({ error: 'Error al crear adjunto' });
+  }
+});
+
+router.put('/api/adjuntos/actualizaAdjunto/:id', isAuthenticated, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const r = await axios.put(`http://localhost:3000/rest/adjuntos/actualizaAdjunto/${id}`, req.body);
+    res.json(r.data);
+  } catch (err) {
+    console.error('proxy actualizaAdjunto:', err);
+    res.status(500).json({ error: 'Error al actualizar adjunto' });
+  }
+});
+
+router.delete('/api/adjuntos/eliminarAdjunto/:id', isAuthenticated, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const r = await axios.delete(`http://localhost:3000/rest/adjuntos/eliminarAdjunto/${id}`);
+    res.json(r.data);
+  } catch (err) {
+    console.error('proxy eliminarAdjunto:', err);
+    res.status(500).json({ error: 'Error al eliminar adjunto' });
+  }
+});
+
+// ===== Proxies de opciones ligeras =====
+router.get('/api/proyectos/options', isAuthenticated, async (req, res) => {
+  try {
+    const r = await axios.get('http://localhost:3000/rest/proyectos/options');
+    res.json(r.data);
+  } catch (err) {
+    console.error('proxy proyectos/options:', err?.message || err);
+    res.status(500).json({ error: 'Error al consultar opciones de proyectos' });
+  }
+});
+
+router.get('/api/tareas/options', isAuthenticated, async (req, res) => {
+  try {
+    const r = await axios.get('http://localhost:3000/rest/tareas/options');
+    res.json(r.data);
+  } catch (err) {
+    console.error('proxy tareas/options:', err?.message || err);
+    res.status(500).json({ error: 'Error al consultar opciones de tareas' });
+  }
+});
+
+router.get('/api/bitacoras/options', isAuthenticated, async (req, res) => {
+  try {
+    const r = await axios.get('http://localhost:3000/rest/bitacoras/options');
+    res.json(r.data);
+  } catch (err) {
+    console.error('proxy bitacoras/options:', err?.message || err);
+    res.status(500).json({ error: 'Error al consultar opciones de bitácoras' });
+  }
+});
+
 
 module.exports = router;

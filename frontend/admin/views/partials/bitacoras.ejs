@@ -1,4 +1,241 @@
-<div>
-    <h2>Bitácoras</h2>
-    <!-- Aquí irá el contenido de la sección Bitácoras -->
+<div class="container">
+
+  <!-- Header -->
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <h2 class="mb-0 text-primary">Bitácoras</h2>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalBitacora">
+      <i class="bi bi-plus-lg me-1"></i> Nueva Bitácora
+    </button>
+  </div>
+
+  <!-- Card tabla -->
+  <div class="card">
+    <div class="card-body">
+
+      <!-- Filtros -->
+      <div class="row g-2 mb-3">
+        <div class="col-md-4">
+          <input id="filtroTitulo" class="form-control" placeholder="Buscar por título..." />
+        </div>
+        <div class="col-md-4">
+          <select id="filtroProyecto" class="form-select">
+            <option value="">Todos los proyectos</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <select id="filtroTarea" class="form-select">
+            <option value="">Todas las tareas</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Tabla -->
+      <div class="table-responsive">
+        <table class="table table-hover align-middle" id="tablaBitacoras">
+          <thead class="table-dark">
+            <tr>
+              <th style="width:80px">ID</th>
+              <th>Proyecto</th>
+              <th>Tarea</th>
+              <th>Título</th>
+              <th>Descripción</th>
+              <th style="width:180px">Creado</th>
+              <th style="width:140px">Acciones</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
 </div>
+
+<!-- Modal Crear/Editar -->
+<div class="modal fade" id="modalBitacora" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <form id="formBitacora">
+        <div class="modal-header">
+          <h5 class="modal-title" id="mb-title">Nueva Bitácora</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Proyecto *</label>
+              <select id="b-proyecto" class="form-select" required></select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Tarea *</label>
+              <select id="b-tarea" class="form-select" required></select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Título *</label>
+              <input id="b-titulo" class="form-control" required />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Descripción</label>
+              <input id="b-descripcion" class="form-control" />
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Cancelar</button>
+          <button class="btn btn-primary" type="submit">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  // ===== Refs =====
+  const $tbody     = document.querySelector('#tablaBitacoras tbody');
+  const $proyecto  = document.getElementById('b-proyecto');
+  const $tarea     = document.getElementById('b-tarea');
+  const $titulo    = document.getElementById('b-titulo');
+  const $desc      = document.getElementById('b-descripcion');
+  const $form      = document.getElementById('formBitacora');
+
+  const $fTitulo   = document.getElementById('filtroTitulo');
+  const $fProyecto = document.getElementById('filtroProyecto');
+  const $fTarea    = document.getElementById('filtroTarea');
+
+  const modalEl = document.getElementById('modalBitacora');
+  let modal = null;
+  function ensureModal(){ if (!modal && window.bootstrap && modalEl) { modal = bootstrap.Modal.getOrCreateInstance(modalEl); } return modal; }
+
+  // ===== Util =====
+  async function j(url, opts){
+    const r = await fetch(url, opts);
+    if (!r.ok) throw new Error(`HTTP ${r.status} ${url}`);
+    return r.json();
+  }
+
+  // ===== Datos cache =====
+  let tareasCache = [];
+
+  // ===== Combos =====
+  async function cargarProyectos() {
+    const data = await j('/api/proyectos/consultaProyectos');
+    const opts = (data || []).map(p => `<option value="${p.id}">${p.nombre}</option>`).join('');
+    $proyecto.innerHTML  = '<option value="">Seleccione Proyecto </option>' + opts;
+    $fProyecto.innerHTML = '<option value="">Todos los proyectos</option>' + opts;
+  }
+
+  async function cargarTareasCache() {
+    const data = await j('/api/tareas/consultaTareas');
+    tareasCache = Array.isArray(data) ? data.map(t => ({
+      id: t.id, nombre: t.nombre, idProyecto: t.idProyecto ?? t.proyectoId ?? t.ProyectoId ?? (t.proyecto?.id ?? null)
+    })) : [];
+  }
+
+  function llenarTareasEn(selectEl, idProyecto) {
+    const pid = idProyecto ? +idProyecto : null;
+    const arr = pid ? tareasCache.filter(t => +t.idProyecto === pid) : [];
+    if (!arr.length) { selectEl.innerHTML = '<option value="">(Sin tareas)</option>'; selectEl.disabled = true; return; }
+    selectEl.innerHTML = '<option value="">Seleccione Tarea</option>' + arr.map(t => `<option value="${t.id}">${t.nombre}</option>`).join('');
+    selectEl.disabled = false;
+  }
+
+  function llenarTareasFiltro(idProyecto) {
+    const pid = idProyecto ? +idProyecto : null;
+    const arr = pid ? tareasCache.filter(t => +t.idProyecto === pid) : tareasCache;
+    $fTarea.innerHTML = '<option value="">Todas las tareas</option>' + arr.map(t => `<option value="${t.id}">${t.nombre}</option>`).join('');
+    $fTarea.disabled = false;
+  }
+
+  // ===== Listado =====
+  function pintarFilas(list) {
+    if (!Array.isArray(list) || !list.length) { $tbody.innerHTML = ''; return; }
+    $tbody.innerHTML = list.map(b => `
+      <tr>
+        <td>${b.id}</td>
+        <td>${b.proyecto?.nombre || ''}</td>
+        <td>${b.tarea?.nombre || ''}</td>
+        <td>${b.titulo || ''}</td>
+        <td>${b.descripcion || ''}</td>
+        <td>${b.createdAt ? new Date(b.createdAt).toLocaleString() : ''}</td>
+        <td class="text-nowrap">
+          <button class="btn btn-sm btn-outline-primary me-1"
+                  data-action="edit" data-id="${b.id}"
+                  data-proyecto="${b.idProyecto}" data-tarea="${b.idTarea}">
+            <i class="bi bi-pencil"></i>
+          </button>
+          <button class="btn btn-sm btn-outline-danger" data-action="del" data-id="${b.id}">
+            <i class="bi bi-trash"></i>
+          </button>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  async function cargarBitacorasAplicandoFiltros() {
+    const data = await j('/api/bitacoras/consultaBitacoras');
+    let list = Array.isArray(data) ? data : [];
+    const ft   = ($fTitulo.value || '').trim().toLowerCase();
+    const fpid = +($fProyecto.value || 0) || null;
+    const ftid = +($fTarea.value || 0) || null;
+
+    if (ft)   list = list.filter(b => (b.titulo || '').toLowerCase().includes(ft));
+    if (fpid) list = list.filter(b => +b.idProyecto === fpid);
+    if (ftid) list = list.filter(b => +b.idTarea === ftid);
+
+    pintarFilas(list);
+  }
+
+  // ===== Eventos =====
+  $proyecto.addEventListener('change', e => { llenarTareasEn($tarea, e.target.value || null); });
+  $fProyecto.addEventListener('change', e => { llenarTareasFiltro(e.target.value || null); $fTarea.value = ''; cargarBitacorasAplicandoFiltros(); });
+  $fTarea.addEventListener('change',  cargarBitacorasAplicandoFiltros);
+  $fTitulo.addEventListener('input',  cargarBitacorasAplicandoFiltros);
+
+  $tbody.addEventListener('click', async (e) => {
+    const btn = e.target.closest('button'); if (!btn) return;
+    const id  = +btn.dataset.id;
+
+    if (btn.dataset.action === 'del') {
+      if (!confirm('¿Eliminar bitácora?')) return;
+      await j(`/api/bitacoras/eliminarBitacora/${id}`, { method: 'DELETE' });
+      return cargarBitacorasAplicandoFiltros();
+    }
+
+    if (btn.dataset.action === 'edit') {
+      $proyecto.value = btn.dataset.proyecto || '';
+      llenarTareasEn($tarea, $proyecto.value || null);
+      $tarea.value    = btn.dataset.tarea || '';
+      ensureModal()?.show();
+    }
+  });
+
+  $form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const payload = {
+      idProyecto: +$proyecto.value || null,
+      idTarea:    +$tarea.value || null,
+      titulo:     ($titulo.value || '').trim(),
+      descripcion:($desc.value || '').trim()
+    };
+    if (!payload.idProyecto || !payload.idTarea || !payload.titulo) { alert('Proyecto, Tarea y Título son obligatorios'); return; }
+
+    const method = $form.dataset.editId ? 'PUT' : 'POST';
+    const url    = $form.dataset.editId ? `/api/bitacoras/actualizaBitacora/${$form.dataset.editId}` : '/api/bitacoras/crearBitacora';
+
+    await j(url, { method, headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+    $form.dataset.editId = '';
+    $form.reset();
+    ensureModal()?.hide();
+    cargarBitacorasAplicandoFiltros();
+  });
+
+  // ===== Init (después de que el DOM existe; Bootstrap puede cargar luego) =====
+  (async function init(){
+    await Promise.all([cargarProyectos(), cargarTareasCache()]);
+    llenarTareasEn($tarea, null);
+    llenarTareasFiltro(null);
+    await cargarBitacorasAplicandoFiltros();
+  })();
+})();
+</script>

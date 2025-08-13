@@ -1,4 +1,210 @@
-<div>
-    <h2>Adjuntos</h2>
-    <!-- Aquí irá el contenido de la sección Adjuntos -->
+<div class="container">
+
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <h2 class="mb-0 text-primary">Adjuntos</h2>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalAdjunto">
+      <i class="bi bi-paperclip me-1"></i> Nuevo Adjunto
+    </button>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+
+      <div class="row g-2 mb-3">
+        <div class="col-md-4">
+          <select id="filtroBitacora" class="form-select">
+            <option value="">Todas las bitácoras</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <input id="filtroTituloAdj" class="form-control" placeholder="Buscar por título..." />
+        </div>
+        <div class="col-md-4">
+          <input id="filtroExtension" class="form-control" placeholder="Filtrar por extensión (png, pdf...)" />
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-hover align-middle" id="tablaAdjuntos">
+          <thead class="table-dark">
+            <tr>
+              <th style="width:80px">ID</th>
+              <th style="width:120px">Bitácora</th>
+              <th>Título</th>
+              <th style="width:140px">Extensión</th>
+              <th>Contenido</th>
+              <th style="width:180px">Creado</th>
+              <th style="width:140px">Acciones</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
 </div>
+
+<!-- Modal -->
+<div class="modal fade" id="modalAdjunto" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <form id="formAdjunto">
+        <div class="modal-header">
+          <h5 class="modal-title" id="ma-title">Nuevo Adjunto</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Bitácora *</label>
+              <select id="a-bitacora" class="form-select" required></select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Título *</label>
+              <input id="a-titulo" class="form-control" required />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Extensión</label>
+              <input id="a-extension" class="form-control" placeholder="png, pdf, docx..." />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Contenido / Ruta</label>
+              <input id="a-contenido" class="form-control" placeholder="ruta/archivo.ext o texto" />
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Cancelar</button>
+          <button class="btn btn-primary" type="submit">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  // ===== Refs =====
+  const $tbody  = document.querySelector('#tablaAdjuntos tbody');
+  const $selBit = document.getElementById('a-bitacora');
+  const $titulo = document.getElementById('a-titulo');
+  const $ext    = document.getElementById('a-extension');
+  const $cont   = document.getElementById('a-contenido');
+  const $form   = document.getElementById('formAdjunto');
+
+  const $fBit   = document.getElementById('filtroBitacora');
+  const $fTit   = document.getElementById('filtroTituloAdj');
+  const $fExt   = document.getElementById('filtroExtension');
+
+  const modalEl = document.getElementById('modalAdjunto');
+  let modal = null;
+  function ensureModal(){ if (!modal && window.bootstrap && modalEl) { modal = bootstrap.Modal.getOrCreateInstance(modalEl); } return modal; }
+
+  // ===== Util =====
+  async function j(url, opts){
+    const r = await fetch(url, opts);
+    if (!r.ok) throw new Error(`HTTP ${r.status} ${url}`);
+    return r.json();
+  }
+
+  // ===== Combos =====
+  async function cargarBitacorasSelects() {
+    const data = await j('/api/bitacoras/consultaBitacoras'); // listado sirve para opciones
+    const arr  = Array.isArray(data) ? data.map(b => ({ id: b.id, titulo: b.titulo || `Bitácora #${b.id}` })) : [];
+
+    if (!arr.length) {
+      $selBit.innerHTML = '<option value="">(Sin bitácoras)</option>';
+      $selBit.disabled  = true;
+      $fBit.innerHTML   = '<option value="">Todas las bitácoras</option>';
+      return;
+    }
+    const opts = arr.map(b => `<option value="${b.id}">#${b.id} - ${b.titulo}</option>`).join('');
+    $selBit.disabled  = false;
+    $selBit.innerHTML = '<option value="">Seleccione Bitácora</option>' + opts;
+    $fBit.innerHTML   = '<option value="">Todas las bitácoras</option>' + opts;
+  }
+
+  // ===== Listado =====
+  function pintarFilas(list) {
+    if (!Array.isArray(list) || !list.length) { $tbody.innerHTML = ''; return; }
+    $tbody.innerHTML = list.map(a => `
+      <tr>
+        <td>${a.id}</td>
+        <td>#${a.idBitacora}</td>
+        <td>${a.titulo || ''}</td>
+        <td><span class="badge text-bg-secondary">${a.extension || '-'}</span></td>
+        <td class="text-truncate" style="max-width:340px;">${a.contenido || ''}</td>
+        <td>${a.createdAt ? new Date(a.createdAt).toLocaleString() : ''}</td>
+        <td class="text-nowrap">
+          <button class="btn btn-sm btn-outline-primary me-1" data-action="edit" data-id="${a.id}">
+            <i class="bi bi-pencil"></i>
+          </button>
+          <button class="btn btn-sm btn-outline-danger" data-action="del" data-id="${a.id}">
+            <i class="bi bi-trash"></i>
+          </button>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  async function cargarAdjuntosAplicandoFiltros() {
+    const q = new URLSearchParams({
+      idBitacora: $fBit.value || '',
+      titulo:     ($fTit.value || '').trim(),
+      extension:  $fExt.value || ''
+    }).toString();
+    const data = await j('/api/adjuntos/consultaAdjuntos' + (q ? '?' + q : ''));
+    pintarFilas(Array.isArray(data) ? data : []);
+  }
+
+  // ===== CRUD =====
+  $form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const payload = {
+      idBitacora: +$selBit.value || null,
+      titulo:     ($titulo.value || '').trim(),
+      extension:  ($ext.value || '').trim(),
+      contenido:  ($cont.value || '').trim()
+    };
+    if (!payload.idBitacora || !payload.titulo) { alert('Bitácora y Título son obligatorios'); return; }
+
+    const isEdit = !!$form.dataset.editId;
+    const url    = isEdit ? `/api/adjuntos/actualizaAdjunto/${$form.dataset.editId}` : '/api/adjuntos/crearAdjunto';
+    const method = isEdit ? 'PUT' : 'POST';
+
+    await j(url, { method, headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+    $form.dataset.editId = '';
+    $form.reset();
+    ensureModal()?.hide();
+    cargarAdjuntosAplicandoFiltros();
+  });
+
+  $tbody.addEventListener('click', async (e) => {
+    const btn = e.target.closest('button'); if (!btn) return;
+    const id  = +btn.dataset.id;
+
+    if (btn.dataset.action === 'del') {
+      if (!confirm('¿Eliminar adjunto?')) return;
+      await j(`/api/adjuntos/eliminarAdjunto/${id}`, { method: 'DELETE' });
+      return cargarAdjuntosAplicandoFiltros();
+    }
+
+    if (btn.dataset.action === 'edit') {
+      $form.dataset.editId = id;
+      ensureModal()?.show();
+    }
+  });
+
+  // ===== Filtros / Modal =====
+  [$fBit, $fTit, $fExt].forEach(el => el && el.addEventListener('input', cargarAdjuntosAplicandoFiltros));
+  $fBit.addEventListener('change', cargarAdjuntosAplicandoFiltros);
+  modalEl.addEventListener('show.bs.modal', cargarBitacorasSelects);
+
+  // ===== Init =====
+  (async function init(){
+    await cargarBitacorasSelects();
+    await cargarAdjuntosAplicandoFiltros();
+  })();
+})();
+</script>
