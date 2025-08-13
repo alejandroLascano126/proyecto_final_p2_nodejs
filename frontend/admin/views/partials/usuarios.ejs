@@ -1,64 +1,354 @@
-<!DOCTYPE html>
-<html lang="es">
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-primary">Gestión de Usuarios</h2>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalUsuario">
+            <i class="bi bi-person-plus"></i> Nuevo Usuario
+        </button>
+    </div>
 
-<head>
-</head>
+    <!-- Filtros de búsqueda -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <input type="text" id="filtroNombreUsuario" class="form-control" placeholder="Buscar por nombre...">
+        </div>
+        <div class="col-md-3">
+            <input type="text" id="filtroUsuarioLogin" class="form-control" placeholder="Buscar por usuario...">
+        </div>
+        <div class="col-md-3">
+            <select id="filtroNivelUsuario" class="form-select">
+                <option value="">Todos los niveles</option>
+                <option value="1">Administrador</option>
+                <option value="2">Usuario</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <button class="btn btn-outline-primary w-100" onclick="filtrarUsuarios()">
+                <i class="bi bi-search"></i> Filtrar
+            </button>
+        </div>
+    </div>
 
-<body>
-    <button id="btnRegistrar" class="btn btn-success">Crear</button>
-    <button id="btnEnviarNuevo" class="btn btn-primary" disabled>Guardar</button>
-    <button id="btnEliminar" class="btn btn-danger" disabled>Eliminar</button>
-
+    <!-- Tabla de usuarios -->
     <div class="table-responsive">
-        <table class="table table-striped table-bordered table-hover" id="tablaUsuarios">
+        <table class="table table-striped table-hover">
             <thead class="table-dark">
                 <tr>
                     <th>ID</th>
                     <th>Usuario</th>
-                    <th>Nombre</th>
-                    <th>Apellido</th>
+                    <th>Nombre Completo</th>
                     <th>Correo</th>
                     <th>Nivel</th>
-                    <th>Fecha de Creación</th>
+                    <th>Fecha de Registro</th>
+                    <th>Acciones</th>
                 </tr>
             </thead>
-            <tbody>
-                <% if (usuarios && usuarios.length> 0) { %>
-                    <% usuarios.forEach(u=> { %>
-                        <tr data-id="<%= u.id %>">
-                            <td>
-                                <%= u.id %>
-                            </td>
-                            <td class="editable" data-campo="usuario">
-                                <%= u.usuario %>
-                            </td>
-                            <td class="editable" data-campo="nombre">
-                                <%= u.nombre %>
-                            </td>
-                            <td class="editable" data-campo="apellido">
-                                <%= u.apellido %>
-                            </td>
-                            <td class="editable" data-campo="correo">
-                                <%= u.correo %>
-                            </td>
-                            <td class="editable" data-campo="nivel">
-                                <%= u.nivel %>
-                            </td>
-                            <td>
-                                <%= new Date(u.createdAt).toLocaleString() %>
-                            </td>
-                        </tr>
-                        <% }) %>
-                            <% } else { %>
-                                <tr>
-                                    <td colspan="7" class="text-center">No hay usuarios registrados</td>
-                                </tr>
-                                <% } %>
+            <tbody id="tablaUsuarios">
+                <!-- Contenido dinámico -->
             </tbody>
         </table>
     </div>
 
+    <!-- Mensaje cuando no hay datos -->
+    <div id="mensajeSinDatosUsuarios" class="text-center py-4" style="display: none;">
+        <i class="bi bi-people fs-1 text-muted"></i>
+        <p class="text-muted">No se encontraron usuarios</p>
+    </div>
+</div>
 
-</body>
+<!-- Modal para crear/editar usuario -->
+<div class="modal fade" id="modalUsuario" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="tituloModalUsuario">Nuevo Usuario</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formUsuario">
+                    <input type="hidden" id="usuarioId">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="nombreUsuario" class="form-label">Nombre *</label>
+                            <input type="text" class="form-control" id="nombreUsuario" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="apellidoUsuario" class="form-label">Apellido</label>
+                            <input type="text" class="form-control" id="apellidoUsuario">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="usuarioLogin" class="form-label">Usuario (Login) *</label>
+                            <input type="text" class="form-control" id="usuarioLogin" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="correoUsuario" class="form-label">Correo Electrónico *</label>
+                            <input type="email" class="form-control" id="correoUsuario" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="nivelUsuario" class="form-label">Nivel de Usuario *</label>
+                            <select class="form-select" id="nivelUsuario" required>
+                                <option value="">Seleccionar nivel</option>
+                                <option value="1">Administrador</option>
+                                <option value="2">Usuario</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="claveUsuario" class="form-label">Contraseña *</label>
+                            <input type="password" class="form-control" id="claveUsuario" required>
+                            <small class="form-text text-muted">Dejar en blanco para mantener la contraseña actual (solo al editar)</small>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="guardarUsuario()">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
 
-</html>
+<style>
+    .badge-nivel-1 { background-color: #dc3545; }
+    .badge-nivel-2 { background-color: #28a745; }
+    .table-hover tbody tr:hover { background-color: #f8f9fa; }
+    .usuario-activo { color: #28a745; }
+    .usuario-inactivo { color: #6c757d; }
+</style>
+
+<script>
+let usuarios = [];
+let editandoUsuario = false;
+
+// Cargar datos al iniciar
+document.addEventListener('DOMContentLoaded', function() {
+    cargarUsuarios();
+});
+
+// Cargar todos los usuarios
+async function cargarUsuarios() {
+    try {
+        const response = await fetch('/api/usuarios/consultaUsuarios');
+        const data = await response.json();
+        
+        if (data.respuesta === "No existen datos" || !Array.isArray(data)) {
+            usuarios = [];
+        } else {
+            usuarios = data;
+        }
+        
+        mostrarUsuarios(usuarios);
+    } catch (error) {
+        console.error('Error al cargar usuarios:', error);
+        mostrarError('Error al cargar los usuarios');
+    }
+}
+
+// Mostrar usuarios en la tabla
+function mostrarUsuarios(listaUsuarios) {
+    const tabla = document.getElementById('tablaUsuarios');
+    const mensajeSinDatos = document.getElementById('mensajeSinDatosUsuarios');
+    
+    if (listaUsuarios.length === 0) {
+        tabla.innerHTML = '';
+        mensajeSinDatos.style.display = 'block';
+        return;
+    }
+    
+    mensajeSinDatos.style.display = 'none';
+    
+    tabla.innerHTML = listaUsuarios.map(usuario => `
+        <tr>
+            <td>${usuario.id}</td>
+            <td><strong>${usuario.usuario}</strong></td>
+            <td>${usuario.nombre} ${usuario.apellido || ''}</td>
+            <td>${usuario.correo}</td>
+            <td><span class="badge badge-nivel-${usuario.nivel}">${obtenerTextoNivel(usuario.nivel)}</span></td>
+            <td>${formatearFecha(usuario.createdAt)}</td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary me-1" onclick="editarUsuario(${usuario.id})" title="Editar">
+                    <i class="bi bi-pencil"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger" onclick="eliminarUsuario(${usuario.id})" title="Eliminar" ${usuario.nivel === 1 ? 'disabled' : ''}>
+                    <i class="bi bi-trash"></i>
+                </button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+// Filtrar usuarios
+function filtrarUsuarios() {
+    const nombreFiltro = document.getElementById('filtroNombreUsuario').value.toLowerCase();
+    const usuarioFiltro = document.getElementById('filtroUsuarioLogin').value.toLowerCase();
+    const nivelFiltro = document.getElementById('filtroNivelUsuario').value;
+    
+    const usuariosFiltrados = usuarios.filter(usuario => {
+        const coincideNombre = !nombreFiltro || 
+            (usuario.nombre && usuario.nombre.toLowerCase().includes(nombreFiltro)) ||
+            (usuario.apellido && usuario.apellido.toLowerCase().includes(nombreFiltro));
+        
+        const coincideUsuario = !usuarioFiltro || 
+            (usuario.usuario && usuario.usuario.toLowerCase().includes(usuarioFiltro));
+        
+        const coincideNivel = !nivelFiltro || usuario.nivel.toString() === nivelFiltro;
+        
+        return coincideNombre && coincideUsuario && coincideNivel;
+    });
+    
+    mostrarUsuarios(usuariosFiltrados);
+}
+
+// Abrir modal para nuevo usuario
+function nuevoUsuario() {
+    editandoUsuario = false;
+    document.getElementById('tituloModalUsuario').textContent = 'Nuevo Usuario';
+    document.getElementById('formUsuario').reset();
+    document.getElementById('usuarioId').value = '';
+    document.getElementById('claveUsuario').required = true;
+    document.querySelector('small.form-text').style.display = 'none';
+}
+
+// Guardar usuario (crear o actualizar)
+async function guardarUsuario() {
+    const form = document.getElementById('formUsuario');
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+    
+    const datos = {
+        nombre: document.getElementById('nombreUsuario').value,
+        apellido: document.getElementById('apellidoUsuario').value,
+        usuario: document.getElementById('usuarioLogin').value,
+        correo: document.getElementById('correoUsuario').value,
+        nivel: parseInt(document.getElementById('nivelUsuario').value)
+    };
+    
+    // Solo incluir clave si se proporciona
+    const clave = document.getElementById('claveUsuario').value;
+    if (clave) {
+        datos.clave = clave;
+    }
+    
+    try {
+        let response;
+        if (editandoUsuario) {
+            const id = document.getElementById('usuarioId').value;
+            // Para editar, usar la ruta que ya existe
+            response = await fetch('/actualizarUsuarios', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify([{id: parseInt(id), ...datos}])
+            });
+        } else {
+            // Para crear, usar la ruta de registro de admin
+            response = await fetch('/registerAdmin', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(datos)
+            });
+        }
+        
+        if (response.ok) {
+            const modal = bootstrap.Modal.getInstance(document.getElementById('modalUsuario'));
+            modal.hide();
+            cargarUsuarios();
+            mostrarExito(editandoUsuario ? 'Usuario actualizado' : 'Usuario creado');
+        } else {
+            throw new Error('Error en la respuesta del servidor');
+        }
+    } catch (error) {
+        console.error('Error al guardar usuario:', error);
+        mostrarError('Error al guardar el usuario');
+    }
+}
+
+// Editar usuario
+function editarUsuario(id) {
+    const usuario = usuarios.find(u => u.id === id);
+    if (!usuario) return;
+    
+    editandoUsuario = true;
+    document.getElementById('tituloModalUsuario').textContent = 'Editar Usuario';
+    document.getElementById('usuarioId').value = usuario.id;
+    document.getElementById('nombreUsuario').value = usuario.nombre;
+    document.getElementById('apellidoUsuario').value = usuario.apellido || '';
+    document.getElementById('usuarioLogin').value = usuario.usuario;
+    document.getElementById('correoUsuario').value = usuario.correo;
+    document.getElementById('nivelUsuario').value = usuario.nivel;
+    document.getElementById('claveUsuario').value = '';
+    document.getElementById('claveUsuario').required = false;
+    document.querySelector('small.form-text').style.display = 'block';
+    
+    const modal = new bootstrap.Modal(document.getElementById('modalUsuario'));
+    modal.show();
+}
+
+// Eliminar usuario
+async function eliminarUsuario(id) {
+    const usuario = usuarios.find(u => u.id === id);
+    if (usuario && usuario.nivel === 1) {
+        mostrarError('No se puede eliminar un usuario administrador');
+        return;
+    }
+    
+    if (!confirm('¿Está seguro de que desea eliminar este usuario?')) return;
+    
+    try {
+        const response = await fetch('/eliminarUsuario', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ idUsuario: id })
+        });
+        
+        if (response.ok) {
+            cargarUsuarios();
+            mostrarExito('Usuario eliminado');
+        } else {
+            throw new Error('Error en la respuesta del servidor');
+        }
+    } catch (error) {
+        console.error('Error al eliminar usuario:', error);
+        mostrarError('Error al eliminar el usuario');
+    }
+}
+
+// Funciones auxiliares
+function obtenerTextoNivel(nivel) {
+    const niveles = { 1: 'Administrador', 2: 'Usuario' };
+    return niveles[nivel] || 'N/A';
+}
+
+function formatearFecha(fecha) {
+    return new Date(fecha).toLocaleDateString('es-ES');
+}
+
+function mostrarExito(mensaje) {
+    // Implementar notificación de éxito
+    alert(mensaje);
+}
+
+function mostrarError(mensaje) {
+    // Implementar notificación de error
+    alert(mensaje);
+}
+
+// Configurar modal para nuevo usuario cuando se abra
+document.getElementById('modalUsuario').addEventListener('show.bs.modal', function(event) {
+    if (event.relatedTarget && event.relatedTarget.getAttribute('data-bs-target') === '#modalUsuario') {
+        nuevoUsuario();
+    }
+});
+
+// Filtrar en tiempo real
+document.getElementById('filtroNombreUsuario').addEventListener('input', filtrarUsuarios);
+document.getElementById('filtroUsuarioLogin').addEventListener('input', filtrarUsuarios);
+document.getElementById('filtroNivelUsuario').addEventListener('change', filtrarUsuarios);
+</script>
+
+<!-- Bootstrap Icons (si no los tienes ya incluidos) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">

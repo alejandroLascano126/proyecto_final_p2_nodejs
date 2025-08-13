@@ -1,4 +1,417 @@
-<div>
-    <h2>Tareas</h2>
-    <!-- Aquí irá el contenido de la sección Tareas -->
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-primary">Gestión de Tareas</h2>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalTarea">
+            <i class="bi bi-plus-circle"></i> Nueva Tarea
+        </button>
+    </div>
+
+    <!-- Filtros de búsqueda -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <input type="text" id="filtroNombreTarea" class="form-control" placeholder="Buscar por nombre...">
+        </div>
+        <div class="col-md-2">
+            <select id="filtroUrgenciaTarea" class="form-select">
+                <option value="">Todas las urgencias</option>
+                <option value="1">Baja</option>
+                <option value="2">Media</option>
+                <option value="3">Alta</option>
+                <option value="4">Crítica</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <input type="text" id="filtroUsuarioTarea" class="form-control" placeholder="Filtrar por usuario...">
+        </div>
+        <div class="col-md-2">
+            <input type="text" id="filtroProyectoTarea" class="form-control" placeholder="Filtrar por proyecto...">
+        </div>
+        <div class="col-md-2">
+            <button class="btn btn-outline-primary w-100" onclick="filtrarTareas()">
+                <i class="bi bi-search"></i> Filtrar
+            </button>
+        </div>
+    </div>
+
+    <!-- Tabla de tareas -->
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Descripción</th>
+                    <th>Proyecto</th>
+                    <th>Usuario Asignado</th>
+                    <th>Urgencia</th>
+                    <th>Fecha Inicio</th>
+                    <th>Fecha Fin Est.</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="tablaTareas">
+                <!-- Contenido dinámico -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Mensaje cuando no hay datos -->
+    <div id="mensajeSinDatosTareas" class="text-center py-4" style="display: none;">
+        <i class="bi bi-clipboard-x fs-1 text-muted"></i>
+        <p class="text-muted">No se encontraron tareas</p>
+    </div>
 </div>
+
+<!-- Modal para crear/editar tarea -->
+<div class="modal fade" id="modalTarea" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="tituloModalTarea">Nueva Tarea</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formTarea">
+                    <input type="hidden" id="tareaId">
+                    <div class="row">
+                        <div class="col-md-8 mb-3">
+                            <label for="nombreTarea" class="form-label">Nombre de la Tarea *</label>
+                            <input type="text" class="form-control" id="nombreTarea" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="urgenciaTarea" class="form-label">Urgencia *</label>
+                            <select class="form-select" id="urgenciaTarea" required>
+                                <option value="">Seleccionar urgencia</option>
+                                <option value="1">Baja</option>
+                                <option value="2">Media</option>
+                                <option value="3">Alta</option>
+                                <option value="4">Crítica</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="proyectoTarea" class="form-label">Proyecto *</label>
+                            <select class="form-select" id="proyectoTarea" required>
+                                <option value="">Seleccionar proyecto</option>
+                                <!-- Opciones dinámicas -->
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="usuarioTarea" class="form-label">Usuario Asignado *</label>
+                            <select class="form-select" id="usuarioTarea" required>
+                                <option value="">Seleccionar usuario</option>
+                                <!-- Opciones dinámicas -->
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="descripcionTarea" class="form-label">Descripción</label>
+                        <textarea class="form-control" id="descripcionTarea" rows="3"></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="fechaInicioTarea" class="form-label">Fecha de Inicio</label>
+                            <input type="date" class="form-control" id="fechaInicioTarea">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="fechaFinEstTarea" class="form-label">Fecha Fin Estimada</label>
+                            <input type="date" class="form-control" id="fechaFinEstTarea">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="fechaFinTarea" class="form-label">Fecha de Fin</label>
+                            <input type="date" class="form-control" id="fechaFinTarea">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="guardarTarea()">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .badge-urgencia-1 { background-color: #28a745; }
+    .badge-urgencia-2 { background-color: #ffc107; color: #000; }
+    .badge-urgencia-3 { background-color: #fd7e14; }
+    .badge-urgencia-4 { background-color: #dc3545; }
+    .table-hover tbody tr:hover { background-color: #f8f9fa; }
+    .proyecto-badge { background-color: #6c757d; }
+</style>
+
+<script>
+let tareas = [];
+let proyectos = [];
+let usuarios = [];
+let editandoTarea = false;
+
+// Cargar datos al iniciar
+document.addEventListener('DOMContentLoaded', function() {
+    cargarTareas();
+    cargarProyectos();
+    cargarUsuarios();
+});
+
+// Cargar todas las tareas
+async function cargarTareas() {
+    try {
+        const response = await fetch('/api/tareas/consultaTareas');
+        const data = await response.json();
+        
+        if (data.respuesta === "No existen datos" || !Array.isArray(data)) {
+            tareas = [];
+        } else {
+            tareas = data;
+        }
+        
+        mostrarTareas(tareas);
+    } catch (error) {
+        console.error('Error al cargar tareas:', error);
+        mostrarError('Error al cargar las tareas');
+    }
+}
+
+// Cargar proyectos para los selects
+async function cargarProyectos() {
+    try {
+        const response = await fetch('/api/proyectos/consultaProyectos');
+        const data = await response.json();
+        
+        if (Array.isArray(data)) {
+            proyectos = data;
+            const selectProyecto = document.getElementById('proyectoTarea');
+            selectProyecto.innerHTML = '<option value="">Seleccionar proyecto</option>' +
+                proyectos.map(p => `<option value="${p.id}">${p.nombre}</option>`).join('');
+        }
+    } catch (error) {
+        console.error('Error al cargar proyectos:', error);
+    }
+}
+
+// Cargar usuarios para los selects
+async function cargarUsuarios() {
+    try {
+        const response = await fetch('/api/usuarios/consultaUsuarios');
+        const data = await response.json();
+        
+        if (Array.isArray(data)) {
+            usuarios = data;
+            const selectUsuario = document.getElementById('usuarioTarea');
+            selectUsuario.innerHTML = '<option value="">Seleccionar usuario</option>' +
+                usuarios.map(u => `<option value="${u.id}">${u.nombre} ${u.apellido || ''} (${u.usuario})</option>`).join('');
+        }
+    } catch (error) {
+        console.error('Error al cargar usuarios:', error);
+    }
+}
+
+// Mostrar tareas en la tabla
+function mostrarTareas(listaTareas) {
+    const tabla = document.getElementById('tablaTareas');
+    const mensajeSinDatos = document.getElementById('mensajeSinDatosTareas');
+    
+    if (listaTareas.length === 0) {
+        tabla.innerHTML = '';
+        mensajeSinDatos.style.display = 'block';
+        return;
+    }
+    
+    mensajeSinDatos.style.display = 'none';
+    
+    tabla.innerHTML = listaTareas.map(tarea => `
+        <tr>
+            <td>${tarea.id}</td>
+            <td><strong>${tarea.nombre}</strong></td>
+            <td>${tarea.descripcion || '-'}</td>
+            <td><span class="badge proyecto-badge">${tarea.proyecto?.nombre || 'N/A'}</span></td>
+            <td>${tarea.usuario?.usuario || 'N/A'}</td>
+            <td><span class="badge badge-urgencia-${tarea.urgencia}">${obtenerTextoUrgencia(tarea.urgencia)}</span></td>
+            <td>${tarea.fechaInicio ? formatearFecha(tarea.fechaInicio) : '-'}</td>
+            <td>${tarea.fechaFinEst ? formatearFecha(tarea.fechaFinEst) : '-'}</td>
+            <td>${obtenerEstadoTarea(tarea)}</td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary me-1" onclick="editarTarea(${tarea.id})" title="Editar">
+                    <i class="bi bi-pencil"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger" onclick="eliminarTarea(${tarea.id})" title="Eliminar">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+// Filtrar tareas
+async function filtrarTareas() {
+    const nombreTarea = document.getElementById('filtroNombreTarea').value;
+    const urgencia = document.getElementById('filtroUrgenciaTarea').value;
+    const usuario = document.getElementById('filtroUsuarioTarea').value;
+    const nombreProyecto = document.getElementById('filtroProyectoTarea').value;
+    
+    try {
+        let url = '/api/tareas/consultaTareaEspecifica?';
+        const params = [];
+        
+        if (nombreTarea) params.push(`nombreTarea=${encodeURIComponent(nombreTarea)}`);
+        if (urgencia) params.push(`urgencia=${urgencia}`);
+        if (usuario) params.push(`usuario=${encodeURIComponent(usuario)}`);
+        if (nombreProyecto) params.push(`nombreProyecto=${encodeURIComponent(nombreProyecto)}`);
+        
+        url += params.join('&');
+        
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (data.respuesta === "No existen datos" || !Array.isArray(data)) {
+            mostrarTareas([]);
+        } else {
+            mostrarTareas(data);
+        }
+    } catch (error) {
+        console.error('Error al filtrar tareas:', error);
+        mostrarError('Error al filtrar las tareas');
+    }
+}
+
+// Abrir modal para nueva tarea
+function nuevaTarea() {
+    editandoTarea = false;
+    document.getElementById('tituloModalTarea').textContent = 'Nueva Tarea';
+    document.getElementById('formTarea').reset();
+    document.getElementById('tareaId').value = '';
+}
+
+// Guardar tarea (crear o actualizar)
+async function guardarTarea() {
+    const form = document.getElementById('formTarea');
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+    
+    const datos = {
+        idProyecto: parseInt(document.getElementById('proyectoTarea').value),
+        idUsuario: parseInt(document.getElementById('usuarioTarea').value),
+        nombre: document.getElementById('nombreTarea').value,
+        descripcion: document.getElementById('descripcionTarea').value,
+        urgencia: parseInt(document.getElementById('urgenciaTarea').value),
+        fechaInicio: document.getElementById('fechaInicioTarea').value || null,
+        fechaFinEst: document.getElementById('fechaFinEstTarea').value || null,
+        fechaFin: document.getElementById('fechaFinTarea').value || null
+    };
+    
+    try {
+        let response;
+        if (editandoTarea) {
+            const id = document.getElementById('tareaId').value;
+            response = await fetch(`/api/tareas/actualizaTarea/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(datos)
+            });
+        } else {
+            response = await fetch('/api/tareas/crearTarea', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(datos)
+            });
+        }
+        
+        if (response.ok) {
+            const modal = bootstrap.Modal.getInstance(document.getElementById('modalTarea'));
+            modal.hide();
+            cargarTareas();
+            mostrarExito(editandoTarea ? 'Tarea actualizada' : 'Tarea creada');
+        } else {
+            throw new Error('Error en la respuesta del servidor');
+        }
+    } catch (error) {
+        console.error('Error al guardar tarea:', error);
+        mostrarError('Error al guardar la tarea');
+    }
+}
+
+// Editar tarea
+function editarTarea(id) {
+    const tarea = tareas.find(t => t.id === id);
+    if (!tarea) return;
+    
+    editandoTarea = true;
+    document.getElementById('tituloModalTarea').textContent = 'Editar Tarea';
+    document.getElementById('tareaId').value = tarea.id;
+    document.getElementById('nombreTarea').value = tarea.nombre;
+    document.getElementById('descripcionTarea').value = tarea.descripcion || '';
+    document.getElementById('urgenciaTarea').value = tarea.urgencia;
+    document.getElementById('proyectoTarea').value = tarea.idProyecto;
+    document.getElementById('usuarioTarea').value = tarea.idUsuario;
+    document.getElementById('fechaInicioTarea').value = tarea.fechaInicio ? tarea.fechaInicio.split('T')[0] : '';
+    document.getElementById('fechaFinEstTarea').value = tarea.fechaFinEst ? tarea.fechaFinEst.split('T')[0] : '';
+    document.getElementById('fechaFinTarea').value = tarea.fechaFin ? tarea.fechaFin.split('T')[0] : '';
+    
+    const modal = new bootstrap.Modal(document.getElementById('modalTarea'));
+    modal.show();
+}
+
+// Eliminar tarea
+async function eliminarTarea(id) {
+    if (!confirm('¿Está seguro de que desea eliminar esta tarea?')) return;
+    
+    try {
+        const response = await fetch(`/api/tareas/eliminarTarea/${id}`, {
+            method: 'DELETE'
+        });
+        
+        if (response.ok) {
+            cargarTareas();
+            mostrarExito('Tarea eliminada');
+        } else {
+            throw new Error('Error en la respuesta del servidor');
+        }
+    } catch (error) {
+        console.error('Error al eliminar tarea:', error);
+        mostrarError('Error al eliminar la tarea');
+    }
+}
+
+// Funciones auxiliares
+function obtenerTextoUrgencia(urgencia) {
+    const urgencias = { 1: 'Baja', 2: 'Media', 3: 'Alta', 4: 'Crítica' };
+    return urgencias[urgencia] || 'N/A';
+}
+
+function obtenerEstadoTarea(tarea) {
+    if (tarea.fechaFin) return '<span class="badge bg-success">Finalizada</span>';
+    if (tarea.fechaInicio) return '<span class="badge bg-warning">En Progreso</span>';
+    return '<span class="badge bg-secondary">Pendiente</span>';
+}
+
+function formatearFecha(fecha) {
+    return new Date(fecha).toLocaleDateString('es-ES');
+}
+
+function mostrarExito(mensaje) {
+    // Implementar notificación de éxito
+    alert(mensaje);
+}
+
+function mostrarError(mensaje) {
+    // Implementar notificación de error
+    alert(mensaje);
+}
+
+// Configurar modal para nueva tarea cuando se abra
+document.getElementById('modalTarea').addEventListener('show.bs.modal', function(event) {
+    if (event.relatedTarget && event.relatedTarget.getAttribute('data-bs-target') === '#modalTarea') {
+        nuevaTarea();
+    }
+});
+</script>
+
+<!-- Bootstrap Icons (si no los tienes ya incluidos) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">

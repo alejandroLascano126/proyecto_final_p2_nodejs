@@ -1,4 +1,352 @@
-<div>
-    <h2>Proyectos</h2>
-    <!-- Aquí irá el contenido de la sección Proyectos -->
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-primary">Gestión de Proyectos</h2>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalProyecto">
+            <i class="bi bi-plus-circle"></i> Nuevo Proyecto
+        </button>
+    </div>
+
+    <!-- Filtros de búsqueda -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <input type="text" id="filtroNombre" class="form-control" placeholder="Buscar por nombre...">
+        </div>
+        <div class="col-md-3">
+            <select id="filtroUrgencia" class="form-select">
+                <option value="">Todas las urgencias</option>
+                <option value="1">Baja</option>
+                <option value="2">Media</option>
+                <option value="3">Alta</option>
+                <option value="4">Crítica</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <input type="text" id="filtroUsuario" class="form-control" placeholder="Filtrar por usuario...">
+        </div>
+        <div class="col-md-2">
+            <button class="btn btn-outline-primary w-100" onclick="filtrarProyectos()">
+                <i class="bi bi-search"></i> Filtrar
+            </button>
+        </div>
+    </div>
+
+    <!-- Tabla de proyectos -->
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Descripción</th>
+                    <th>Usuario</th>
+                    <th>Urgencia</th>
+                    <th>Fecha Inicio</th>
+                    <th>Fecha Fin Est.</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="tablaProyectos">
+                <!-- Contenido dinámico -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Mensaje cuando no hay datos -->
+    <div id="mensajeSinDatos" class="text-center py-4" style="display: none;">
+        <i class="bi bi-inbox fs-1 text-muted"></i>
+        <p class="text-muted">No se encontraron proyectos</p>
+    </div>
 </div>
+
+<!-- Modal para crear/editar proyecto -->
+<div class="modal fade" id="modalProyecto" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="tituloModal">Nuevo Proyecto</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formProyecto">
+                    <input type="hidden" id="proyectoId">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="nombreProyecto" class="form-label">Nombre del Proyecto *</label>
+                            <input type="text" class="form-control" id="nombreProyecto" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="urgenciaProyecto" class="form-label">Urgencia *</label>
+                            <select class="form-select" id="urgenciaProyecto" required>
+                                <option value="">Seleccionar urgencia</option>
+                                <option value="1">Baja</option>
+                                <option value="2">Media</option>
+                                <option value="3">Alta</option>
+                                <option value="4">Crítica</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="descripcionProyecto" class="form-label">Descripción</label>
+                        <textarea class="form-control" id="descripcionProyecto" rows="3"></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="fechaInicioProyecto" class="form-label">Fecha de Inicio</label>
+                            <input type="date" class="form-control" id="fechaInicioProyecto">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="fechaFinEstProyecto" class="form-label">Fecha Fin Estimada</label>
+                            <input type="date" class="form-control" id="fechaFinEstProyecto">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="fechaFinProyecto" class="form-label">Fecha de Fin</label>
+                            <input type="date" class="form-control" id="fechaFinProyecto">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="guardarProyecto()">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .badge-urgencia-1 { background-color: #28a745; }
+    .badge-urgencia-2 { background-color: #ffc107; color: #000; }
+    .badge-urgencia-3 { background-color: #fd7e14; }
+    .badge-urgencia-4 { background-color: #dc3545; }
+    .table-hover tbody tr:hover { background-color: #f8f9fa; }
+</style>
+
+<script>
+let proyectos = [];
+let editandoProyecto = false;
+
+// Cargar proyectos al iniciar
+document.addEventListener('DOMContentLoaded', function() {
+    cargarProyectos();
+});
+
+// Cargar todos los proyectos
+async function cargarProyectos() {
+    try {
+        const response = await fetch('/api/proyectos/consultaProyectos');
+        const data = await response.json();
+        
+        if (data.respuesta === "No existen datos" || !Array.isArray(data)) {
+            proyectos = [];
+        } else {
+            proyectos = data;
+        }
+        
+        mostrarProyectos(proyectos);
+    } catch (error) {
+        console.error('Error al cargar proyectos:', error);
+        mostrarError('Error al cargar los proyectos');
+    }
+}
+
+// Mostrar proyectos en la tabla
+function mostrarProyectos(listaProyectos) {
+    const tabla = document.getElementById('tablaProyectos');
+    const mensajeSinDatos = document.getElementById('mensajeSinDatos');
+    
+    if (listaProyectos.length === 0) {
+        tabla.innerHTML = '';
+        mensajeSinDatos.style.display = 'block';
+        return;
+    }
+    
+    mensajeSinDatos.style.display = 'none';
+    
+    tabla.innerHTML = listaProyectos.map(proyecto => `
+        <tr>
+            <td>${proyecto.id}</td>
+            <td><strong>${proyecto.nombre}</strong></td>
+            <td>${proyecto.descripcion || '-'}</td>
+            <td>${proyecto.usuario?.usuario || 'N/A'}</td>
+            <td><span class="badge badge-urgencia-${proyecto.urgencia}">${obtenerTextoUrgencia(proyecto.urgencia)}</span></td>
+            <td>${proyecto.fechaInicio ? formatearFecha(proyecto.fechaInicio) : '-'}</td>
+            <td>${proyecto.fechaFinEst ? formatearFecha(proyecto.fechaFinEst) : '-'}</td>
+            <td>${obtenerEstadoProyecto(proyecto)}</td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary me-1" onclick="editarProyecto(${proyecto.id})" title="Editar">
+                    <i class="bi bi-pencil"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger" onclick="eliminarProyecto(${proyecto.id})" title="Eliminar">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+// Filtrar proyectos
+async function filtrarProyectos() {
+    const nombre = document.getElementById('filtroNombre').value;
+    const urgencia = document.getElementById('filtroUrgencia').value;
+    const usuario = document.getElementById('filtroUsuario').value;
+    
+    try {
+        let url = '/api/proyectos/consultaProyectoEspecifico?';
+        const params = [];
+        
+        if (nombre) params.push(`nombre=${encodeURIComponent(nombre)}`);
+        if (urgencia) params.push(`urgencia=${urgencia}`);
+        if (usuario) params.push(`usuario=${encodeURIComponent(usuario)}`);
+        
+        url += params.join('&');
+        
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (data.respuesta === "No existen datos" || !Array.isArray(data)) {
+            mostrarProyectos([]);
+        } else {
+            mostrarProyectos(data);
+        }
+    } catch (error) {
+        console.error('Error al filtrar proyectos:', error);
+        mostrarError('Error al filtrar los proyectos');
+    }
+}
+
+// Abrir modal para nuevo proyecto
+function nuevoProyecto() {
+    editandoProyecto = false;
+    document.getElementById('tituloModal').textContent = 'Nuevo Proyecto';
+    document.getElementById('formProyecto').reset();
+    document.getElementById('proyectoId').value = '';
+}
+
+// Guardar proyecto (crear o actualizar)
+async function guardarProyecto() {
+    const form = document.getElementById('formProyecto');
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+    
+    const datos = {
+        usuarioId: 1, // Usar ID del usuario logueado
+        nombre: document.getElementById('nombreProyecto').value,
+        descripcion: document.getElementById('descripcionProyecto').value,
+        urgencia: parseInt(document.getElementById('urgenciaProyecto').value),
+        fechaInicio: document.getElementById('fechaInicioProyecto').value || null,
+        fechaFinEst: document.getElementById('fechaFinEstProyecto').value || null,
+        fechaFin: document.getElementById('fechaFinProyecto').value || null
+    };
+    
+    try {
+        let response;
+        if (editandoProyecto) {
+            const id = document.getElementById('proyectoId').value;
+            response = await fetch(`/api/proyectos/actualizaProyecto/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(datos)
+            });
+        } else {
+            response = await fetch('/api/proyectos/creaProyecto', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(datos)
+            });
+        }
+        
+        if (response.ok) {
+            const modal = bootstrap.Modal.getInstance(document.getElementById('modalProyecto'));
+            modal.hide();
+            cargarProyectos();
+            mostrarExito(editandoProyecto ? 'Proyecto actualizado' : 'Proyecto creado');
+        } else {
+            throw new Error('Error en la respuesta del servidor');
+        }
+    } catch (error) {
+        console.error('Error al guardar proyecto:', error);
+        mostrarError('Error al guardar el proyecto');
+    }
+}
+
+// Editar proyecto
+function editarProyecto(id) {
+    const proyecto = proyectos.find(p => p.id === id);
+    if (!proyecto) return;
+    
+    editandoProyecto = true;
+    document.getElementById('tituloModal').textContent = 'Editar Proyecto';
+    document.getElementById('proyectoId').value = proyecto.id;
+    document.getElementById('nombreProyecto').value = proyecto.nombre;
+    document.getElementById('descripcionProyecto').value = proyecto.descripcion || '';
+    document.getElementById('urgenciaProyecto').value = proyecto.urgencia;
+    document.getElementById('fechaInicioProyecto').value = proyecto.fechaInicio ? proyecto.fechaInicio.split('T')[0] : '';
+    document.getElementById('fechaFinEstProyecto').value = proyecto.fechaFinEst ? proyecto.fechaFinEst.split('T')[0] : '';
+    document.getElementById('fechaFinProyecto').value = proyecto.fechaFin ? proyecto.fechaFin.split('T')[0] : '';
+    
+    const modal = new bootstrap.Modal(document.getElementById('modalProyecto'));
+    modal.show();
+}
+
+// Eliminar proyecto
+async function eliminarProyecto(id) {
+    if (!confirm('¿Está seguro de que desea eliminar este proyecto?')) return;
+    
+    try {
+        const response = await fetch(`/api/proyectos/eliminarProyecto/${id}`, {
+            method: 'DELETE'
+        });
+        
+        if (response.ok) {
+            cargarProyectos();
+            mostrarExito('Proyecto eliminado');
+        } else {
+            throw new Error('Error en la respuesta del servidor');
+        }
+    } catch (error) {
+        console.error('Error al eliminar proyecto:', error);
+        mostrarError('Error al eliminar el proyecto');
+    }
+}
+
+// Funciones auxiliares
+function obtenerTextoUrgencia(urgencia) {
+    const urgencias = { 1: 'Baja', 2: 'Media', 3: 'Alta', 4: 'Crítica' };
+    return urgencias[urgencia] || 'N/A';
+}
+
+function obtenerEstadoProyecto(proyecto) {
+    if (proyecto.fechaFin) return '<span class="badge bg-success">Finalizado</span>';
+    if (proyecto.fechaInicio) return '<span class="badge bg-warning">En Progreso</span>';
+    return '<span class="badge bg-secondary">Pendiente</span>';
+}
+
+function formatearFecha(fecha) {
+    return new Date(fecha).toLocaleDateString('es-ES');
+}
+
+function mostrarExito(mensaje) {
+    // Implementar notificación de éxito
+    alert(mensaje);
+}
+
+function mostrarError(mensaje) {
+    // Implementar notificación de error
+    alert(mensaje);
+}
+
+// Configurar modal para nuevo proyecto cuando se abra
+document.getElementById('modalProyecto').addEventListener('show.bs.modal', function(event) {
+    if (event.relatedTarget && event.relatedTarget.getAttribute('data-bs-target') === '#modalProyecto') {
+        nuevoProyecto();
+    }
+});
+</script>
+
+<!-- Bootstrap Icons (si no los tienes ya incluidos) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
