@@ -1,0 +1,349 @@
+<!-- views/partials/dashboard.ejs -->
+<div class="container-fluid px-4">
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <h2 class="mb-0">Resumen</h2>
+    <div class="d-flex align-items-center gap-2">
+      <label for="yearSelect" class="form-label mb-0 small text-muted">Año</label>
+      <select id="yearSelect" class="form-select form-select-sm"></select>
+    </div>
+  </div>
+
+  <!-- KPIs -->
+  <div class="row g-3">
+    <div class="col-6 col-lg-3">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <div class="small text-muted">Usuarios</div>
+          <div class="fs-3 fw-semibold" id="kpiUsuarios">–</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <div class="small text-muted">Proyectos</div>
+          <div class="fs-3 fw-semibold" id="kpiProyectos">–</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <div class="small text-muted">Tareas</div>
+          <div class="fs-3 fw-semibold" id="kpiTareas">–</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <div class="small text-muted">Bitácoras</div>
+          <div class="fs-3 fw-semibold" id="kpiBitacoras">–</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-6 col-lg-3">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <div class="small text-muted">Adjuntos</div>
+          <div class="fs-3 fw-semibold" id="kpiAdjuntos">–</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <div class="small text-muted">Tareas abiertas</div>
+          <div class="fs-3 fw-semibold" id="kpiAbiertas">–</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <div class="small text-muted">Tareas vencidas</div>
+          <div class="fs-3 fw-semibold text-danger" id="kpiVencidas">–</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <div class="small text-muted">Proyectos activos</div>
+          <div class="fs-3 fw-semibold" id="kpiProyActivos">–</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Gráficos fila 1 -->
+  <div class="row g-3 mt-1">
+    <div class="col-12 col-xl-6">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <div class="fw-semibold mb-2">Tareas por urgencia</div>
+          <canvas id="chartUrgenciaTareas" height="220"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-xl-6">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <div class="fw-semibold mb-2">Estado de tareas</div>
+          <canvas id="chartEstadoTareas" height="220"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Gráfico series -->
+  <div class="row g-3 mt-1">
+    <div class="col-12">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <div class="fw-semibold mb-2">Series mensuales</div>
+          <canvas id="chartSeries" height="260"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top -->
+  <div class="row g-3 mt-1">
+    <div class="col-12 col-xl-6">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <div class="fw-semibold mb-2">Top usuarios (tareas abiertas)</div>
+          <canvas id="chartTopUsuarios" height="220"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-xl-6">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <div class="fw-semibold mb-2">Top proyectos (tareas abiertas)</div>
+          <canvas id="chartTopProyectos" height="220"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  /* ===== TUNING GLOBAL PARA CHARTS ===== */
+  const CHART_MAX_HEIGHT = 260;    // px para charts normales
+  const CHART_MAX_HEIGHT_LG = 300; // px para la línea (series)
+  const CHART_ASPECT = 16/9;       // relación de aspecto
+  const CHART_ANIM = false;        // sin animación para bajar consumo
+
+  // Inyecta estilos para controlar altura de los canvas
+  (function injectChartCSS(){
+    const css = `
+      #chartUrgenciaTareas, #chartEstadoTareas, #chartTopUsuarios, #chartTopProyectos {
+        max-height: ${CHART_MAX_HEIGHT}px !important;
+        height: ${CHART_MAX_HEIGHT}px !important;
+        width: 100% !important;
+        display: block;
+      }
+      #chartSeries {
+        max-height: ${CHART_MAX_HEIGHT_LG}px !important;
+        height: ${CHART_MAX_HEIGHT_LG}px !important;
+        width: 100% !important;
+        display: block;
+      }
+      /* Evitar que el contenedor crezca sin control */
+      .card .card-body { overflow: hidden; }
+    `;
+    const s = document.createElement('style');
+    s.appendChild(document.createTextNode(css));
+    document.head.appendChild(s);
+  })();
+
+  // Carga segura de Chart.js (si no está en el layout)
+  function ensureChart() {
+    return new Promise((resolve, reject) => {
+      if (window.Chart) return resolve();
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/chart.js';
+      s.onload = () => resolve();
+      s.onerror = () => reject(new Error('No se pudo cargar Chart.js'));
+      document.head.appendChild(s);
+    });
+  }
+
+  // Helpers
+  const monthLabels = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const setKpi = (id, v) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = (v ?? 0).toLocaleString('es-EC');
+  };
+
+  // Mantén referencias para destruir/redibujar y evitar fugas de memoria
+  let chUrgencia = null, chEstado = null, chSeries = null, chTopU = null, chTopP = null;
+
+  // Opciones base para todos los gráficos
+  function baseOpts(extra = {}) {
+    return {
+      responsive: true,
+      maintainAspectRatio: true,
+      aspectRatio: CHART_ASPECT,
+      animation: CHART_ANIM ? {} : false,
+      plugins: {
+        legend: { display: true, labels: { boxWidth: 10 } },
+        tooltip: { enabled: true }
+      },
+      elements: {
+        line: { tension: 0.25, borderWidth: 2 },
+        point: { radius: 2, hitRadius: 6 }
+      },
+      ...extra
+    };
+  }
+
+  // Charts
+  function renderUrgenciaChart(porUrgencia) {
+    const ctx = document.getElementById('chartUrgenciaTareas').getContext('2d');
+    if (chUrgencia) chUrgencia.destroy();
+    const data = [porUrgencia['1']||0, porUrgencia['2']||0, porUrgencia['3']||0, porUrgencia['4']||0];
+    chUrgencia = new Chart(ctx, {
+      type: 'bar',
+      data: { labels: ['Baja','Media','Alta','Crítica'], datasets: [{ label: 'Tareas', data }] },
+      options: baseOpts({
+        scales: {
+          x: { ticks: { maxRotation: 0 } },
+          y: { beginAtZero: true, suggestedMax: Math.max(...data, 1) }
+        }
+      })
+    });
+  }
+
+  function renderEstadoChart(estado) {
+    const ctx = document.getElementById('chartEstadoTareas').getContext('2d');
+    if (chEstado) chEstado.destroy();
+    chEstado = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Pendiente','En Progreso','Finalizada','Vencida'],
+        datasets: [{ data: [estado.pendientes||0, estado.enProgreso||0, estado.finalizadas||0, estado.vencidas||0] }]
+      },
+      options: baseOpts({
+        cutout: '55%',
+      })
+    });
+  }
+
+  function renderSeries(series) {
+    const ctx = document.getElementById('chartSeries').getContext('2d');
+    if (chSeries) chSeries.destroy();
+
+    const datasets = [
+      { label: 'Proyectos creados', data: series.proyectosCreados.map(x => x.count) },
+      { label: 'Tareas creadas', data: series.tareasCreadas.map(x => x.count) },
+      { label: 'Tareas finalizadas', data: series.tareasFinalizadas.map(x => x.count) }
+    ];
+
+    chSeries = new Chart(ctx, {
+      type: 'line',
+      data: { labels: monthLabels, datasets },
+      options: baseOpts({
+        elements: { line: { tension: 0.2 }, point: { radius: 2 } },
+        scales: {
+          x: { grid: { display: false } },
+          y: { beginAtZero: true }
+        }
+      })
+    });
+  }
+
+  function renderTop(t) {
+    const ctxU = document.getElementById('chartTopUsuarios').getContext('2d');
+    const ctxP = document.getElementById('chartTopProyectos').getContext('2d');
+    if (chTopU) chTopU.destroy();
+    if (chTopP) chTopP.destroy();
+
+    const uLabels = t.topUsuarios.map(x => (x.nombre + ' ' + x.apellido).trim() || '—');
+    const uData   = t.topUsuarios.map(x => x.abiertas);
+    const pLabels = t.topProyectos.map(x => x.nombre || ('ID ' + x.id));
+    const pData   = t.topProyectos.map(x => x.abiertas);
+
+    chTopU = new Chart(ctxU, {
+      type: 'bar',
+      data: { labels: uLabels, datasets: [{ label: 'Tareas abiertas', data: uData }] },
+      options: baseOpts({
+        scales: {
+          x: { ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 6 } },
+          y: { beginAtZero: true, suggestedMax: Math.max(...uData, 1) }
+        }
+      })
+    });
+
+    chTopP = new Chart(ctxP, {
+      type: 'bar',
+      data: { labels: pLabels, datasets: [{ label: 'Tareas abiertas', data: pData }] },
+      options: baseOpts({
+        indexAxis: 'y',
+        scales: {
+          x: { beginAtZero: true, suggestedMax: Math.max(...pData, 1) },
+          y: { ticks: { autoSkip: true, maxTicksLimit: 6 } }
+        }
+      })
+    });
+  }
+
+  // Data loaders
+  async function loadKPIs() {
+    const r = await fetch('/api/dashboard/kpis');
+    if (!r.ok) throw new Error('kpis');
+    const { kpis, tareas, proyectos } = await r.json();
+
+    setKpi('kpiUsuarios', kpis.usuariosTotal);
+    setKpi('kpiProyectos', kpis.proyectosTotal);
+    setKpi('kpiTareas', kpis.tareasTotal);
+    setKpi('kpiBitacoras', kpis.bitacorasTotal);
+    setKpi('kpiAdjuntos', kpis.adjuntosTotal);
+    setKpi('kpiAbiertas', tareas.abiertas);
+    setKpi('kpiVencidas', tareas.vencidas);
+    setKpi('kpiProyActivos', proyectos.activos);
+
+    renderUrgenciaChart(tareas.porUrgencia);
+    renderEstadoChart({
+      pendientes: tareas.pendientes,
+      enProgreso: tareas.enProgreso,
+      finalizadas: tareas.finalizadas,
+      vencidas: tareas.vencidas
+    });
+  }
+
+  async function loadSeries(year) {
+    const r = await fetch('/api/dashboard/series?year=' + year);
+    if (!r.ok) throw new Error('series');
+    renderSeries(await r.json());
+  }
+
+  async function loadTop() {
+    const r = await fetch('/api/dashboard/top');
+    if (!r.ok) throw new Error('top');
+    renderTop(await r.json());
+  }
+
+  function fillYearSelect() {
+    const sel = document.getElementById('yearSelect');
+    const yNow = new Date().getFullYear();
+    const years = [yNow - 2, yNow - 1, yNow, yNow + 1];
+    sel.innerHTML = years.map(y => `<option value="${y}" ${y===yNow?'selected':''}>${y}</option>`).join('');
+    sel.addEventListener('change', () => loadSeries(sel.value));
+  }
+
+  // Init
+  (async function init() {
+    try {
+      fillYearSelect();
+      await ensureChart();
+      await loadKPIs();
+      await loadSeries(new Date().getFullYear());
+      await loadTop();
+    } catch (e) { console.error(e); }
+  })();
+</script>
+

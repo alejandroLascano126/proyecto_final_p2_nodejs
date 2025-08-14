@@ -23,15 +23,17 @@ function isAuthenticated(req, res, next) {
 }
 
 // Dashboard principal
-router.get('/dashboard', isAuthenticated, function (req, res, next) {
-  res.render('dashboard', { body: '' });
+router.get('/dashboard', isAuthenticated, async function (req, res, next) {
+  try {
+    const body = await ejs.renderFile(path.join(__dirname, '../views/partials/dashboard.ejs'));
+    res.render('dashboard', { body });
+  } catch (error) {
+    console.error('Error rendering home partial:', error);
+    res.status(500).send('Error al cargar el dashboard');
+  }
 });
 
-// Dashboard secciones (partials)
-// router.get('/dashboard/usuarios', isAuthenticated, function(req, res, next) {
-//   res.render('dashboard', { body: require('ejs').renderFile(
-//     __dirname + '/../views/partials/usuarios.ejs', {}, {}, function(err, str) { return str; }) });
-// });
+
 router.get('/dashboard/usuarios', isAuthenticated, async function (req, res, next) {
   try {
     const body = await ejs.renderFile(__dirname + '/../views/partials/usuarios.ejs');
@@ -102,7 +104,7 @@ router.post('/login', async function (req, res, next) {
   try {
     const response = await axios.post('http://localhost:3000/rest/usuarios/login', { correo, clave });
     req.session.user = response.data.usuario;
-    res.redirect('/dashboard/proyectos');
+    res.redirect('/dashboard');
   } catch (err) {
     res.render('login', { error: 'Credenciales incorrectas' });
   }
@@ -478,6 +480,37 @@ router.get('/api/bitacoras/options', isAuthenticated, async (req, res) => {
   } catch (err) {
     console.error('proxy bitacoras/options:', err?.message || err);
     res.status(500).json({ error: 'Error al consultar opciones de bitácoras' });
+  }
+});
+
+// ===== RUTAS PROXY PARA DASHBOARD =====
+router.get('/api/dashboard/kpis', isAuthenticated, async (req, res) => {
+  try {
+    const r = await axios.get('http://localhost:3000/rest/dashboard/kpis');
+    res.json(r.data);
+  } catch (err) {
+    console.error('proxy dashboard/kpis:', err?.message || err);
+    res.status(500).json({ error: 'Error al consultar KPIs' });
+  }
+});
+
+router.get('/api/dashboard/series', isAuthenticated, async (req, res) => {
+  try {
+    const r = await axios.get('http://localhost:3000/rest/dashboard/series', { params: req.query });
+    res.json(r.data);
+  } catch (err) {
+    console.error('proxy dashboard/series:', err?.message || err);
+    res.status(500).json({ error: 'Error al consultar series' });
+  }
+});
+
+router.get('/api/dashboard/top', isAuthenticated, async (req, res) => {
+  try {
+    const r = await axios.get('http://localhost:3000/rest/dashboard/top');
+    res.json(r.data);
+  } catch (err) {
+    console.error('proxy dashboard/top:', err?.message || err);
+    res.status(500).json({ error: 'Error al consultar top' });
   }
 });
 
