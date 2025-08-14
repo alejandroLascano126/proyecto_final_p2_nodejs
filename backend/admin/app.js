@@ -6,12 +6,13 @@ var logger = require('morgan');
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
-var usuariosRouter = require('./routes/rest/usuarios')
-var administradorDeProyectosRouter = require('./routes/rest/administradorDeProyectos')
-var proyectosRouter = require('./routes/rest/proyectos')
-var tareasRouter = require('./routes/rest/tareas')
-var bitacorasRouter = require('./routes/rest/bitacoras')
-var adjuntosRouter = require('./routes/rest/adjuntos')
+var usuariosRouter = require('./routes/rest/usuarios');
+var administradorDeProyectosRouter = require('./routes/rest/administradorDeProyectos');
+var proyectosRouter = require('./routes/rest/proyectos');
+var tareasRouter = require('./routes/rest/tareas');
+var bitacorasRouter = require('./routes/rest/bitacoras');
+var adjuntosRouter = require('./routes/rest/adjuntos');
+var dashboardRouter = require('./routes/rest/dashboard');
 
 var app = express();
 
@@ -42,9 +43,10 @@ app.use('/users', usersRouter);
 app.use('/rest/usuarios', usuariosRouter);
 app.use('/rest/administradorDeProyectos', administradorDeProyectosRouter);
 app.use('/rest/proyectos', proyectosRouter);
-app.use('/rest/tareas', tareasRouter)
-app.use('/rest/bitacoras', bitacorasRouter)
-app.use('/rest/adjuntos', adjuntosRouter)
+app.use('/rest/tareas', tareasRouter);
+app.use('/rest/bitacoras', bitacorasRouter);
+app.use('/rest/adjuntos', adjuntosRouter);
+app.use('/rest/dashboard', dashboardRouter);
 
 // Alias para compatibilidad con /api/
 app.use('/api/usuarios', usuariosRouter);
@@ -53,7 +55,7 @@ app.use('/api/proyectos', proyectosRouter);
 app.use('/api/tareas', tareasRouter);
 app.use('/api/bitacoras', bitacorasRouter);
 app.use('/api/adjuntos', adjuntosRouter);
-
+app.use('/api/dashboard', dashboardRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
