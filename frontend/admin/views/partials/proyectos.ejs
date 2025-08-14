@@ -24,8 +24,8 @@
             <input type="text" id="filtroUsuario" class="form-control" placeholder="Filtrar por usuario...">
         </div>
         <div class="col-md-2">
-            <button class="btn btn-outline-primary w-100" onclick="filtrarProyectos()">
-                <i class="bi bi-search"></i> Filtrar
+            <button class="btn btn-outline-secondary w-100" onclick="limpiarFiltrosProyectos()">
+                <i class="bi bi-arrow-clockwise"></i> Limpiar
             </button>
         </div>
     </div>
@@ -131,6 +131,24 @@ let editandoProyecto = false;
 // Cargar proyectos al iniciar
 document.addEventListener('DOMContentLoaded', function() {
     cargarProyectos();
+    
+    // Agregar event listeners para filtros en tiempo real
+    const filtroNombre = document.getElementById('filtroNombre');
+    const filtroUrgencia = document.getElementById('filtroUrgencia');
+    const filtroUsuario = document.getElementById('filtroUsuario');
+    
+    // Filtrar mientras escribe (con un pequeño delay para evitar muchas peticiones)
+    let timeoutId;
+    function filtrarConDelay() {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+            filtrarProyectos();
+        }, 300); // 300ms de delay
+    }
+    
+    if (filtroNombre) filtroNombre.addEventListener('input', filtrarConDelay);
+    if (filtroUsuario) filtroUsuario.addEventListener('input', filtrarConDelay);
+    if (filtroUrgencia) filtroUrgencia.addEventListener('change', filtrarProyectos);
 });
 
 // Cargar todos los proyectos
@@ -215,6 +233,14 @@ async function filtrarProyectos() {
         console.error('Error al filtrar proyectos:', error);
         mostrarError('Error al filtrar los proyectos');
     }
+}
+
+// Limpiar filtros de proyectos
+function limpiarFiltrosProyectos() {
+    document.getElementById('filtroNombre').value = '';
+    document.getElementById('filtroUrgencia').value = '';
+    document.getElementById('filtroUsuario').value = '';
+    cargarProyectos(); // Cargar todos los proyectos sin filtros
 }
 
 // Abrir modal para nuevo proyecto

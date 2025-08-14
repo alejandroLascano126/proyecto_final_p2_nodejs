@@ -27,8 +27,8 @@
             <input type="text" id="filtroProyectoTarea" class="form-control" placeholder="Filtrar por proyecto...">
         </div>
         <div class="col-md-2">
-            <button class="btn btn-outline-primary w-100" onclick="filtrarTareas()">
-                <i class="bi bi-search"></i> Filtrar
+            <button class="btn btn-outline-secondary w-100" onclick="limpiarFiltrosTareas()">
+                <i class="bi bi-arrow-clockwise"></i> Limpiar
             </button>
         </div>
     </div>
@@ -156,6 +156,26 @@ document.addEventListener('DOMContentLoaded', function() {
     cargarTareas();
     cargarProyectos();
     cargarUsuarios();
+    
+    // Agregar event listeners para filtros en tiempo real
+    const filtroNombreTarea = document.getElementById('filtroNombreTarea');
+    const filtroUrgenciaTarea = document.getElementById('filtroUrgenciaTarea');
+    const filtroUsuarioTarea = document.getElementById('filtroUsuarioTarea');
+    const filtroProyectoTarea = document.getElementById('filtroProyectoTarea');
+    
+    // Filtrar mientras escribe (con un pequeño delay para evitar muchas peticiones)
+    let timeoutId;
+    function filtrarConDelay() {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+            filtrarTareas();
+        }, 300); // 300ms de delay
+    }
+    
+    if (filtroNombreTarea) filtroNombreTarea.addEventListener('input', filtrarConDelay);
+    if (filtroUsuarioTarea) filtroUsuarioTarea.addEventListener('input', filtrarConDelay);
+    if (filtroProyectoTarea) filtroProyectoTarea.addEventListener('input', filtrarConDelay);
+    if (filtroUrgenciaTarea) filtroUrgenciaTarea.addEventListener('change', filtrarTareas);
 });
 
 // Cargar todas las tareas
@@ -249,7 +269,7 @@ function mostrarTareas(listaTareas) {
 
 // Filtrar tareas
 async function filtrarTareas() {
-    const nombreTarea = document.getElementById('filtroNombreTarea').value;
+    const nombre = document.getElementById('filtroNombreTarea').value;
     const urgencia = document.getElementById('filtroUrgenciaTarea').value;
     const usuario = document.getElementById('filtroUsuarioTarea').value;
     const nombreProyecto = document.getElementById('filtroProyectoTarea').value;
@@ -258,7 +278,7 @@ async function filtrarTareas() {
         let url = '/api/tareas/consultaTareaEspecifica?';
         const params = [];
         
-        if (nombreTarea) params.push(`nombreTarea=${encodeURIComponent(nombreTarea)}`);
+        if (nombre) params.push(`nombre=${encodeURIComponent(nombre)}`);
         if (urgencia) params.push(`urgencia=${urgencia}`);
         if (usuario) params.push(`usuario=${encodeURIComponent(usuario)}`);
         if (nombreProyecto) params.push(`nombreProyecto=${encodeURIComponent(nombreProyecto)}`);
@@ -277,6 +297,15 @@ async function filtrarTareas() {
         console.error('Error al filtrar tareas:', error);
         mostrarError('Error al filtrar las tareas');
     }
+}
+
+// Limpiar filtros de tareas
+function limpiarFiltrosTareas() {
+    document.getElementById('filtroNombreTarea').value = '';
+    document.getElementById('filtroUrgenciaTarea').value = '';
+    document.getElementById('filtroUsuarioTarea').value = '';
+    document.getElementById('filtroProyectoTarea').value = '';
+    cargarTareas(); // Cargar todas las tareas sin filtros
 }
 
 // Abrir modal para nueva tarea

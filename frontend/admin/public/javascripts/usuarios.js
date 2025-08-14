@@ -1,5 +1,11 @@
 document.addEventListener('DOMContentLoaded', () => {
-  const tabla = document.getElementById('tablaUsuarios').querySelector('tbody');
+  // Solo ejecutar si estamos en la página de usuarios
+  const tablaUsuarios = document.getElementById('tablaUsuarios');
+  if (!tablaUsuarios) {
+    return; // Salir si no estamos en la página de usuarios
+  }
+  
+  const tabla = tablaUsuarios.querySelector('tbody');
   const btnRegistrar = document.getElementById('btnRegistrar');
   const btnEnviarNuevo = document.getElementById('btnEnviarNuevo');
   const btnEliminar = document.getElementById('btnEliminar');
@@ -242,4 +248,4 @@ document.addEventListener('DOMContentLoaded', () => {
       alert(err.message);
     }
   });
-});
+}); // Cierre del condicional DOMContentLoaded

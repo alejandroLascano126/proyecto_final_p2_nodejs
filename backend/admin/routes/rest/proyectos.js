@@ -5,62 +5,77 @@ const Proyecto = require('../../models').proyectos;
 const { Op } = require('sequelize');
 
 
-router.get('/consultaProyectos', function (req, res, next) {
-    Proyecto.findAll({
-        include: [{
-            model: Usuario,
-            attributes: ['usuario']
-        }]
-    })
-        .then(proyectos => {
-            if (proyectos.length === 0) {
-                res.json({ respuesta: "No existen datos" });
-            } else {
-                res.json(proyectos);
-            }
-        }).catch(error => res.status(400).send(error));
+router.get('/consultaProyectos', async (req, res) => {
+    try {
+        const proyectos = await Proyecto.findAll({
+            include: [{
+                model: Usuario,
+                attributes: ['usuario']
+            }],
+            order: [['createdAt', 'DESC']]
+        });
+        
+        if (proyectos.length === 0) {
+            res.json({ respuesta: "No existen datos" });
+        } else {
+            res.json(proyectos);
+        }
+    } catch (error) {
+        console.error('consultaProyectos error:', error);
+        res.status(400).send(error);
+    }
 });
 
-router.get('/consultaProyectoEspecifico', function (req, res) {
-    let { usuario, nombre, urgencia, fechaInicio, fechaFinEst, fechaFin, createdAt } = req.query;
+router.get('/consultaProyectoEspecifico', async (req, res) => {
+    try {
+        const { usuario, nombre, urgencia, fechaInicio, fechaFinEst, fechaFin, createdAt } = req.query;
 
-    let valoresFiltros = {};
+        const where = {};
+        
+        // Filtros para la tabla proyectos
+        if (nombre) where.nombre = { [Op.like]: `%${nombre}%` }; // Búsqueda parcial
+        if (urgencia) where.urgencia = urgencia;
+        if (fechaInicio) where.fechaInicio = fechaInicio;
+        if (fechaFinEst) where.fechaFinEst = fechaFinEst;
+        if (fechaFin) where.fechaFin = fechaFin;
+        if (createdAt) where.createdAt = createdAt;
 
-    if (nombre) valoresFiltros.nombre = nombre;
-    if (urgencia) valoresFiltros.urgencia = urgencia;
-    if (fechaInicio) valoresFiltros.fechaInicio = fechaInicio;
-    if (fechaFinEst) valoresFiltros.fechaFinEst = fechaFinEst;
-    if (fechaFin) valoresFiltros.fechaFin = fechaFin;
-    if (createdAt) valoresFiltros.createdAt = createdAt;
+        // Filtro para usuario
+        const usuarioWhere = usuario ? { usuario: { [Op.like]: `%${usuario}%` } } : {};
 
-    Proyecto.findAll({
-        where: valoresFiltros,
-        include: [{
-            model: Usuario,
-            attributes: ['usuario'],
-            where: usuario ? { usuario: usuario } : undefined
-        }]
-    })
-        .then(proyectos => {
-            if (proyectos.length === 0) {
-                res.json({ respuesta: "No existen datos" });
-            } else {
-                res.json(proyectos);
-            }
-        }).catch(error => res.status(400).send(error));
+        const proyectos = await Proyecto.findAll({
+            where,
+            include: [{
+                model: Usuario,
+                attributes: ['usuario'],
+                where: Object.keys(usuarioWhere).length ? usuarioWhere : undefined,
+                required: Object.keys(usuarioWhere).length > 0
+            }],
+            order: [['createdAt', 'DESC']]
+        });
+
+        if (proyectos.length === 0) {
+            res.json({ respuesta: "No existen datos" });
+        } else {
+            res.json(proyectos);
+        }
+    } catch (error) {
+        console.error('consultaProyectoEspecifico error:', error);
+        res.status(400).send(error);
+    }
 });
 
 router.post('/creaProyecto', function (req, res, next) {
-  let { usuarioId, nombre, descripcion, urgencia } = req.body;
+  let { usuarioId, nombre, descripcion, urgencia, fechaInicio, fechaFinEst, fechaFin } = req.body;
 
   Proyecto.create({
     usuarioId: usuarioId,
     nombre: nombre,
     descripcion: descripcion,
     urgencia: urgencia,
-    fechaInicio: null,
-    fechaFinEst: null,
-    fechaFin: null,
+    fechaInicio: fechaInicio || new Date(), // Si no se proporciona, usar fecha actual
+    fechaFinEst: fechaFinEst || null,
+    fechaFin: fechaFin || null,
     createdAt: new Date(),
     updatedAt: new Date()
   }).then(proyectos => {

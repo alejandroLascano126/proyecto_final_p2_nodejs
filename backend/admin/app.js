@@ -25,6 +25,18 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Configuración CORS para permitir llamadas desde el frontend
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', 'http://localhost:3001');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(200);
+  } else {
+    next();
+  }
+});
+
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use('/rest/usuarios', usuariosRouter);
@@ -34,7 +46,13 @@ app.use('/rest/tareas', tareasRouter)
 app.use('/rest/bitacoras', bitacorasRouter)
 app.use('/rest/adjuntos', adjuntosRouter)
 
-//app.use('/api/usuarios', require('./routes/rest/usuarios'));
+// Alias para compatibilidad con /api/
+app.use('/api/usuarios', usuariosRouter);
+app.use('/api/administradorDeProyectos', administradorDeProyectosRouter);
+app.use('/api/proyectos', proyectosRouter);
+app.use('/api/tareas', tareasRouter);
+app.use('/api/bitacoras', bitacorasRouter);
+app.use('/api/adjuntos', adjuntosRouter);
 
 
 // catch 404 and forward to error handler
