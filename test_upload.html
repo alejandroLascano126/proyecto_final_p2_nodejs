@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prueba de Upload</title>
+</head>
+<body>
+    <h1>Prueba de Subida de Archivo</h1>
+    
+    <form id="uploadForm">
+        <div>
+            <label for="idBitacora">ID Bitácora:</label>
+            <input type="number" id="idBitacora" name="idBitacora" value="1" required>
+        </div>
+        <div>
+            <label for="titulo">Título:</label>
+            <input type="text" id="titulo" name="titulo" value="Archivo de prueba" required>
+        </div>
+        <div>
+            <label for="archivo">Archivo:</label>
+            <input type="file" id="archivo" name="archivo" required>
+        </div>
+        <button type="submit">Subir Archivo</button>
+    </form>
+
+    <div id="result"></div>
+
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData();
+            formData.append('idBitacora', document.getElementById('idBitacora').value);
+            formData.append('titulo', document.getElementById('titulo').value);
+            formData.append('archivo', document.getElementById('archivo').files[0]);
+
+            try {
+                console.log('Enviando a: http://localhost:3001/api/adjuntos/subirAdjunto');
+                const response = await fetch('http://localhost:3001/api/adjuntos/subirAdjunto', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.text();
+                console.log('Response status:', response.status);
+                console.log('Response:', result);
+                
+                document.getElementById('result').innerHTML = `
+                    <h3>Resultado:</h3>
+                    <p>Status: ${response.status}</p>
+                    <pre>${result}</pre>
+                `;
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('result').innerHTML = `
+                    <h3>Error:</h3>
+                    <p>${error.message}</p>
+                `;
+            }
+        });
+    </script>
+</body>
+</html>
